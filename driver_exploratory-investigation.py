@@ -11,6 +11,7 @@ import pandas as pd
 import os
 import calendar
 
+#current working directory
 cd = os.getcwd()
 
 """
@@ -22,7 +23,15 @@ cd = os.getcwd()
   Available at: [pdf] http://dx.doi.org/10.1016/j.dss.2014.03.001
                 [bib] http://www3.dsi.uminho.pt/pcortez/bib/2014-dss.txt
 """
+#Build path to the dataset
 data_dir = os.path.join(cd,'data','bank+marketing','bank-additional','bank-additional')
+
+#Build paths to store extracted data plots 
+#Make directory structure if it doesn't exist
+data_output_dir = os.path.join(cd,'outputs','exploratory')
+plot_output_dir = os.path.join(data_output_dir,'plots')
+if not os.path.isdir(plot_output_dir):
+    os.makedirs(plot_output_dir)
 
 #Load the dataset
 data_df = pd.read_csv(os.path.join(data_dir,'bank-additional-full.csv'),sep=';')
@@ -31,10 +40,23 @@ data_df = pd.read_csv(os.path.join(data_dir,'bank-additional-full.csv'),sep=';')
 Initial Investigation.  Get a sense of the dataset and perform some preliminary
 checks to see if the dataset is clean or if there are potential errors
 """
+#target feature as identified in the metadata
 target_feature = 'y'
 #Two target feature values (as expected).  
 target_feature_set = sorted(list(set(data_df[target_feature])))
-print('Target feature values: {}'.format(target_feature_set))
+print('Target feature values: {} <== Expected two'.format(target_feature_set))
+
+#Drop the "duration" feature per discussion in the metadata:
+"""
+    Important note:  this attribute highly affects the output target 
+    (e.g., if duration=0 then y="no"). Yet, the duration is not known before a 
+    call is performed. Also, after the end of the call y is obviously known. 
+    Thus, this input should only be included for benchmark purposes and should 
+    be discarded if the intention is to have a realistic predictive model.
+"""
+features_to_drop = ['duration']
+features_to_keep = [key for key in data_df.keys() if not key in features_to_drop]
+data_df = data_df[features_to_keep]
 
 #Determine data type of each feature
 data_type_dict = {}
@@ -50,35 +72,39 @@ for key in data_df.keys():
 #Convert no previous contact (pdays=999) to pdays=-1 for visualization purposes
 data_df.loc[data_df.pdays == 999,'pdays'] = -1
 
-
+#Init an empty dictionary to hold counts for later use
 counts_dict = {}
         
-for key in data_df.keys():
-    if data_type_dict[key] == 'numeric':
-        #Plot a histogram
-        plt.figure()
-        for target in target_feature_set:
-            plt.hist(data_df.loc[data_df[target_feature]==target,key],alpha=0.5,bins=20,label = 'target={}'.format(target))
-        plt.xlabel(key)
-        plt.legend()
-    else:
-        """
-        For each feature, find the breakdown of number of instances 
-        """
-        counts_dict[key] = []
-        print('\n{}:'.format(key))
-        cur_feature_set = set(data_df[key])
-        for feature_val in cur_feature_set:
-            temp_df = data_df.loc[data_df[key]==feature_val]
-            num_instances = temp_df.shape[0]
-            counts_dict[key].append((feature_val,num_instances))
-            percent = 100*num_instances/data_df.shape[0]
-            display_string = '{}: {}/{} ({:0.2f}%). Targ. feat.:'.format(feature_val,num_instances,data_df.shape[0],percent)
-            for target_feature_val in target_feature_set:
-                temp_num_instances = temp_df.loc[temp_df[target_feature] == target_feature_val].shape[0]
-                percent = 100*temp_num_instances/num_instances
-                display_string = '{} {}={}/{}({:0.2f}%)'.format(display_string,target_feature_val,temp_num_instances,num_instances,percent)
-            print('  {}'.format(display_string))
+with open(os.path.join(data_output_dir,'exploratory_counts.txt'),'w') as f:
+    for key in data_df.keys():
+        if data_type_dict[key] == 'numeric':
+            #Plot histograms split by the target feature
+            plt.figure()
+            for target in target_feature_set:
+                plt.hist(data_df.loc[data_df[target_feature]==target,key],alpha=0.5,bins=20,label = 'target={}'.format(target))
+            plt.xlabel(key)
+            plt.legend()
+            plt.savefig(os.path.join(plot_output_dir,'histogram_{}.png'.format(key)))
+            plt.close()
+        else:
+            """
+            For each feature, find the breakdown of number of instances 
+            """
+            #Init a list to hold counts for the current feature
+            counts_dict[key] = []
+            f.write('\n{}:\n'.format(key))
+            cur_feature_set = set(data_df[key])
+            for feature_val in cur_feature_set:
+                temp_df = data_df.loc[data_df[key]==feature_val]
+                num_instances = temp_df.shape[0]
+                counts_dict[key].append((feature_val,num_instances))
+                percent = 100*num_instances/data_df.shape[0]
+                display_string = '{}: {}/{} ({:0.2f}%). Targ. feat.:'.format(feature_val,num_instances,data_df.shape[0],percent)
+                for target_feature_val in target_feature_set:
+                    temp_num_instances = temp_df.loc[temp_df[target_feature] == target_feature_val].shape[0]
+                    percent = 100*temp_num_instances/num_instances
+                    display_string = '{} {}={}/{}({:0.2f}%)'.format(display_string,target_feature_val,temp_num_instances,num_instances,percent)
+                f.write('  {}\n'.format(display_string))
                 
      
 """
@@ -87,17 +113,20 @@ Create plot to investigate
 
 """
 #adapted from: https://stackoverflow.com/questions/3418050/how-to-map-month-name-to-month-number-and-vice-versa
+#Dictionary comprehension to create a translation dict from month/day abbrevations
+#to counts
 month_num_dict = {month.lower(): index for index, month in enumerate(calendar.month_abbr) if month}
 day_num_dict = {month.lower(): index for index, month in enumerate(calendar.day_abbr) if month}
 
+#Pull the per-month counts out of the dictionary
 month_counts = counts_dict['month']
-
+#Convert from list of tuples to dict
 month_count_dict = {month_num_dict[tpl[0]]:tpl[1] for tpl in month_counts}
 
-month = []
+#For each month 1-12, put the count in a list
+month = range(1,13)
 count = []
-for i in range(1,13):
-    month.append(i)
+for i in month:
     if i in month_count_dict.keys():
         count.append(month_count_dict[i])
     else:
@@ -107,6 +136,10 @@ plt.figure()
 plt.bar(month,count)
 plt.xlabel('Month')
 plt.ylabel("num records")
+plt.savefig(os.path.join(plot_output_dir,'histogram_counts_by_month.png'))
+plt.close()
+
+
 
 """
 Check for records that might indicate duplicates (e.g., different contacts for different people)
@@ -121,19 +154,19 @@ identifying_records = [
     'housing',
     'loan']
 
+#Make a temporary dataframe containing only identifying records
 temp = data_df[identifying_records].copy()
+#make a column to hold the counts after aggregation
 temp['counts'] = 1
+#groupby on the identifying records
 data_df_agg = temp.groupby(identifying_records,as_index=False).count()
-print('\n{} unique combinations of identifying information; not enough to separate dataset by individual'.format(data_df_agg.shape[0]))
+print('\n{} unique combinations of identifying information'.format(data_df_agg.shape[0]))
 
-
-identifying_records = [
-    'age_range',
-    'job',
-    'education',
-    'default',
-    'housing',
-    'loan']
+"""
+NOTE:
+    only ~9k unique combinations means that a unique ID for each person in the 
+    dataset cannot be generated
+"""
 
 #Find the minimum and maximum ages
 min_age = data_df.age.min()
@@ -143,50 +176,76 @@ max_age = data_df.age.max()
 group_by = 10
 min_age_category = int(np.floor(min_age/group_by)*group_by)
 max_age_category = int(np.ceil(max_age/group_by)*group_by)
-#+1 to max_age_category because arange is on the range of [min,max)
+#+0.1 to max_age_category because arange is on the range of [min,max)
 breaks = np.arange(min_age_category,max_age_category+0.1,group_by).astype(int) 
+#Build list of age break tuples
 break_tpls = list(zip(breaks[:-1],breaks[1:]))
 
 #add age-range variable
 for start,end in break_tpls:
+    #Find records within the current age range
     mask = (data_df.age >= start) & (data_df.age < end)
+    #Add the age range feature to the dataframe
+    #use end-1 to avoid overlap (ages are integers, so the largest age that is
+    #less than end is end-1)
     data_df.loc[mask,'age_range'] = '{}-{}'.format(start,end-1)
 
+#Update the identifying records list to use age-range instead of raw age
+identifying_records = [
+    'age_range',
+    'job',
+    'education',
+    'default',
+    'housing',
+    'loan']
 
+#Generate a list of tuples containing only identifying information
+#The following will perform the same action as list(zip()) without hard-coding
+#the data columns, but is *significantly* slower
+# identifying_tpls = [tuple(data_df.loc[ind,identifying_records]) for ind in data_df.index]
 identifying_tpls = list(zip(data_df.age_range,data_df.job,data_df.education,data_df.default,data_df.housing,data_df.loan))
+#Unique identifying tuples; personas
 identifying_tpl_set = set(identifying_tpls)
 
-identifying_tpl_set_counts = []
-
-summary_dict = pd.DataFrame()
+#Init an empty dataframe
+summary_df = pd.DataFrame()
 
 tpl = identifying_tpls[0]
 """
-Aggregate dataset to see who is in the dataset
+Aggregate dataset to see what personas are in the dataset
 """
 #Note: It may be possible to do this using pandas groupby (perhaps with lambdas 
 #to calculate the "no" and "yes" columns?) but it's not immediately obvious to me
 print('\n')
 for ctr,tpl in enumerate(identifying_tpl_set):
-    print('\rProcessing unique identifier set: {}/{}'.format(str(ctr).zfill(4),len(identifying_tpl_set)),end='',flush=True)
+    #Track progress
+    print('\rProcessing persona: {}/{}'.format(str(ctr+1).zfill(4),len(identifying_tpl_set)),end='',flush=True)
+    #Boolean mask of all matches to the current persona
     mask = np.all(data_df[identifying_records] == tpl,axis=1)
+    #Count the breakdown of outcome feature states
     outcome_counts = []
     for target_feature_val in target_feature_set:
         outcome_counts.append(sum(data_df.loc[mask,target_feature] == target_feature_val))
+    #Find the number of matches to the current persona
     count = sum(mask)
     
-    summary_dict.loc[ctr,'counts'] = count
-    summary_dict.loc[ctr,identifying_records] = tpl
-    summary_dict.loc[ctr,target_feature_set] = outcome_counts
+    #Add the data to the summary dataframe
+    summary_df.loc[ctr,'counts'] = count
+    summary_df.loc[ctr,identifying_records] = tpl
+    summary_df.loc[ctr,target_feature_set] = outcome_counts
     
-    
-summary_dict['frac_y'] = summary_dict.yes/summary_dict.counts
-summary_dict.sort_values('counts',ascending=False,inplace=True)
+#Calculate the fraction of positive responses for each unique persona
+summary_df['frac_y'] = summary_df.yes/summary_df.counts
+#Sort high counts to the top of the dataframe
+summary_df.sort_values('counts',ascending=False,inplace=True)
+#Export to csv
+summary_df.to_csv(os.path.join(data_output_dir,'aggregate_summary_data.csv'))
         
 """
 Questions/Notes:
     1. Reasons for the uneven distribution of contact-by-month?
     2. If previous contact was a success (e.g., poutcome='success') why was there another contact?
     3. If groupby age,job,education,default,housing,&loan, there are only ~9k unique records
+    4. No missing/nan values in the dataset (all missing are explicitly indicated as such)
     
 """
