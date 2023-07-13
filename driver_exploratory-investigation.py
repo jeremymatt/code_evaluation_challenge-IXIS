@@ -14,6 +14,9 @@ import calendar
 #current working directory
 cd = os.getcwd()
 
+#Set plot font size
+plt.rcParams.update({'font.size': 25})
+
 """
   This dataset is publicly available for research. The details are described in [Moro et al., 2014]. 
   Please include this citation if you plan to use this database:
@@ -79,13 +82,14 @@ with open(os.path.join(data_output_dir,'exploratory_counts.txt'),'w') as f:
     for key in data_df.keys():
         if data_type_dict[key] == 'numeric':
             #Plot histograms split by the target feature
-            plt.figure()
+            
+            fig,ax = plt.subplots(1,1,figsize=[20,15])
             for target in target_feature_set:
-                plt.hist(data_df.loc[data_df[target_feature]==target,key],alpha=0.5,bins=20,label = 'target={}'.format(target))
-            plt.xlabel(key)
-            plt.legend()
-            plt.savefig(os.path.join(plot_output_dir,'histogram_{}.png'.format(key)))
-            plt.close()
+                ax.hist(data_df.loc[data_df[target_feature]==target,key],alpha=0.5,bins=20,label = 'target={}'.format(target))
+            ax.set_xlabel(key)
+            ax.legend()
+            fig.savefig(os.path.join(plot_output_dir,'histogram_{}.png'.format(key)),bbox_inches='tight')
+            plt.close(fig)
         else:
             """
             For each feature, find the breakdown of number of instances 
@@ -106,7 +110,7 @@ with open(os.path.join(data_output_dir,'exploratory_counts.txt'),'w') as f:
                     display_string = '{} {}={}/{}({:0.2f}%)'.format(display_string,target_feature_val,temp_num_instances,num_instances,percent)
                 f.write('  {}\n'.format(display_string))
                 
-     
+
 """
 Some months have very few associated records (e.g., december only has 182 - 0.44%)
 Create plot to investigate
@@ -132,12 +136,12 @@ for i in month:
     else:
         count.append(0)
 
-plt.figure()        
-plt.bar(month,count)
-plt.xlabel('Month')
-plt.ylabel("num records")
-plt.savefig(os.path.join(plot_output_dir,'histogram_counts_by_month.png'))
-plt.close()
+fig,ax = plt.subplots(1,1,figsize=[20,15])     
+ax.bar(month,count)
+ax.set_xlabel('Month')
+ax.set_ylabel("num records")
+fig.savefig(os.path.join(plot_output_dir,'histogram_counts_by_month.png'),bbox_inches='tight')
+plt.close(fig)
 
 
 
