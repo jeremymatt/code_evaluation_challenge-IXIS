@@ -1,3 +1,11 @@
+# Specific File Extensions
+*.zip
+*.DS_Store
+*.Rhistory
+
+#Directories
+*MACOSX*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
