@@ -49,17 +49,7 @@ target_feature = 'y'
 target_feature_set = sorted(list(set(data_df[target_feature])))
 print('Target feature values: {} <== Expected two'.format(target_feature_set))
 
-#Drop the "duration" feature per discussion in the metadata:
-"""
-    Important note:  this attribute highly affects the output target 
-    (e.g., if duration=0 then y="no"). Yet, the duration is not known before a 
-    call is performed. Also, after the end of the call y is obviously known. 
-    Thus, this input should only be included for benchmark purposes and should 
-    be discarded if the intention is to have a realistic predictive model.
-"""
-features_to_drop = ['duration']
-features_to_keep = [key for key in data_df.keys() if not key in features_to_drop]
-data_df = data_df[features_to_keep]
+
 
 #Determine data type of each feature
 data_type_dict = {}
