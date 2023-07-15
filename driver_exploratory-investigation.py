@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import calendar
+import helper_functions as HF
 
 #current working directory
 cd = os.getcwd()
@@ -37,7 +38,7 @@ if not os.path.isdir(plot_output_dir):
     os.makedirs(plot_output_dir)
 
 #Load the dataset
-data_df = pd.read_csv(os.path.join(data_dir,'bank-additional-full.csv'),sep=';')
+data_df = HF.load_dataframe(os.path.join(data_dir,'bank-additional-full.csv'))
 
 """
 Initial Investigation.  Get a sense of the dataset and perform some preliminary
@@ -49,21 +50,8 @@ target_feature = 'y'
 target_feature_set = sorted(list(set(data_df[target_feature])))
 print('Target feature values: {} <== Expected two'.format(target_feature_set))
 
-
-
-#Determine data type of each feature
-data_type_dict = {}
-for key in data_df.keys():
-    try:
-        #If the data can be converted to a float, it is numeric
-        data_df[key].astype(float)
-        data_type_dict[key] = 'numeric'
-    except:
-        #otherwise consider the data to be categorical
-        data_type_dict[key] = 'categorical'
-        
-#Convert no previous contact (pdays=999) to pdays=-1 for visualization purposes
-data_df.loc[data_df.pdays == 999,'pdays'] = -1
+#Identify which columns exclusively contain numeric data and which do not
+data_type_dict,categorical_features = HF.identify_categorical_cols(data_df)
 
 #Init an empty dictionary to hold counts for later use
 counts_dict = {}
@@ -77,6 +65,7 @@ with open(os.path.join(data_output_dir,'exploratory_counts.txt'),'w') as f:
             for target in target_feature_set:
                 ax.hist(data_df.loc[data_df[target_feature]==target,key],alpha=0.5,bins=20,label = 'target={}'.format(target))
             ax.set_xlabel(key)
+            ax.set_yscale('log')
             ax.legend()
             fig.savefig(os.path.join(plot_output_dir,'histogram_{}.png'.format(key)),bbox_inches='tight')
             plt.close(fig)
