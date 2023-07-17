@@ -16,8 +16,9 @@ from keras import layers
 from keras import Input
 from keras import Model
 import sklearn
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report,precision_score,recall_score
 from sklearn.ensemble import RandomForestClassifier as RF
+
 
 #current working directory
 cd = os.getcwd()
@@ -81,13 +82,44 @@ class_weights = dict(zip(np.unique(classes), class_weights))
 
 #%%
 
-n_estimators = 200
-max_depth = 5
+results_dict = {}
+
+for n_estimators in np.arange(25,150,25):
+    results_dict[n_estimators] = {'precision':[],'recall':[]}
+    for max_depth in range(1,20):
+        print('\rEstimators: {}, depth: {}'.format(n_estimators,max_depth),end='',flush=True)
+        model = RF(
+            n_estimators = n_estimators,
+            max_depth = max_depth,
+            class_weight = class_weights)
+        model.fit(x_train, y_train)
+        out = model.predict(x_test)
+        
+        results_dict[n_estimators]['precision'].append(precision_score(y_test, out))
+        results_dict[n_estimators]['recall'].append(recall_score(y_test, out))
+   
+print('\n\n')
+fig,ax = plt.subplots(1,1,figsize=[20,15])
+for n_estimators in results_dict.keys():
+    ax.plot(results_dict[n_estimators]['precision'],results_dict[n_estimators]['recall'],label = 'n_estimators: {}'.format(n_estimators))
+    
+ax.set_xlabel('precision')
+ax.set_ylabel('recall')
+fig.legend()
+     
+
+
+n_estimators = 50
+max_depth = 10
+
+print('\rSelected Estimators: {}, depth: {}'.format(n_estimators,max_depth),end='',flush=True)
 model = RF(
     n_estimators = n_estimators,
     max_depth = max_depth,
     class_weight = class_weights)
 model.fit(x_train, y_train)
+out = model.predict(x_test)
+        
 
 out = model.predict(x_test)
 
