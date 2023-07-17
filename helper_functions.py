@@ -6,6 +6,11 @@ Created on Thu Jul 13 19:48:22 2023
 """
 
 import pandas as pd
+import numpy as np
+from keras import layers
+from keras import Input
+from keras import Model
+import keras
 
 
 
@@ -119,7 +124,7 @@ def gen_onehot_cols(df,features):
     #Drop the unnecssary keys
     df = df[keys_to_keep]
     
-    return dfd
+    return df,binary_dict
 
 def min_max_norm(df):
     for key in df.keys():
@@ -131,4 +136,94 @@ def min_max_norm(df):
     return df
             
             
+def build_backprop_model(num_features,layer_neuron_list):
+      
+    #Define the input layer
+    input_layer = Input(shape = (num_features,))
+  
+    #Add the first layer
+    cur_layer = layers.Dense(layer_neuron_list[0],activation='relu')(input_layer)
+    #Store the current layer in a list
+    layer_list = [cur_layer]
+    #For each subsequent layer in the neuron list, add layer to the model
+    for ctr,num_neurons in enumerate(layer_neuron_list[1:]):
+        temp = layers.Dense(num_neurons,activation='relu')(layer_list[ctr])
+        layer_list.append(temp)
+    
+    
+    #Define the output layer with sigmoid activation
+    outputs = layers.Dense(1,activation='sigmoid')(layer_list[-1])
+    
+    #Construct the model
+    model = Model(inputs = input_layer,outputs=outputs)
         
+    #Compile the model
+    model.compile(
+        loss='binary_crossentropy', 
+        optimizer=keras.optimizers.RMSprop(learning_rate=0.0005), 
+        metrics = ['accuracy'])
+    
+    
+    model.summary()
+    
+    return model        
+
+def confusion_matrix(labels_true,labels_pred,labels_dict=None,reverse=True):
+    """
+    Generates confusion matrix from true and predicted labels.  Optionally
+    renames classes based on labels_dict.  True values are on rows and predicted
+    values are on columns
+
+    Parameters
+    ----------
+    label_true : TYPE
+        DESCRIPTION.
+    label_pred : TYPE
+        DESCRIPTION.
+    labels_dict : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    label_true : TYPE pandas dataframe
+        DESCRIPTION.
+
+    """
+    
+    confusion = pd.DataFrame()
+    
+    labels_true = np.array(labels_true)
+    labels_pred = np.array(labels_pred)
+    
+    true_label_set = set(labels_true)
+    pred_label_set = set(labels_pred)
+    all_labels_set = true_label_set.union(pred_label_set)
+    
+    all_labels_set = list(all_labels_set)
+    all_labels_set.sort(reverse = reverse)
+    
+    true_label_set = list(true_label_set)
+    true_label_set.sort(reverse = reverse)
+    
+    pred_label_set = list(pred_label_set)
+    pred_label_set.sort(reverse = reverse)
+    
+    
+    if not type(labels_dict) == dict:
+        labels_dict = {}
+        for label in all_labels_set:
+            labels_dict[label] = str(label)
+    
+    for true_label in true_label_set:
+        true_index = labels_dict[true_label]
+        true_mask = labels_true == true_label
+        for pred_label in pred_label_set:
+            pred_index = labels_dict[pred_label]
+            pred_mask = labels_pred == pred_label
+            confusion.loc[true_index,pred_index] = int(sum(true_mask&pred_mask))
+            
+    confusion = confusion.astype(int)
+    
+    confusion['n'] = confusion.sum(axis=1)
+    
+    return confusion,true_label_set,pred_label_set
