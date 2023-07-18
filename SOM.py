@@ -13,8 +13,8 @@ import os
 import pickle
 import tqdm
 import itertools
-from dtaidistance import dtw ##
-from tslearn import metrics ##
+# from dtaidistance import dtw ##
+# from tslearn import metrics ##
 import sys
 import itertools
 from sklearn.cluster import AgglomerativeClustering
@@ -722,50 +722,53 @@ class SOM:
     
     
     def find_winning_dtw(self,cur_x):
-        upper_bounds = self.euclidean_distance(cur_x)
         
-        lower_bound_threshold = upper_bounds.min().min()
+        DYNAMIC_TIME_WARPING_NOT_NEEDED = True
+        
+        # upper_bounds = self.euclidean_distance(cur_x)
+        
+        # lower_bound_threshold = upper_bounds.min().min()
                 
-        lower_bounds = np.ones(self.grid_size)*np.nan
-        for i in range(self.grid_size[0]):
-            for j in range(self.grid_size[1]):
-                lower_bounds[i,j] = metrics.lb_keogh(cur_x, self.grid[:,i,j], radius=self.window_size)
+        # lower_bounds = np.ones(self.grid_size)*np.nan
+        # for i in range(self.grid_size[0]):
+        #     for j in range(self.grid_size[1]):
+        #         lower_bounds[i,j] = metrics.lb_keogh(cur_x, self.grid[:,i,j], radius=self.window_size)
                 
                 
-        candidate_nodes = np.where(lower_bounds<=lower_bound_threshold)
+        # candidate_nodes = np.where(lower_bounds<=lower_bound_threshold)
         
-        candidate_nodes = list(zip(candidate_nodes[0],candidate_nodes[1]))
+        # candidate_nodes = list(zip(candidate_nodes[0],candidate_nodes[1]))
         
-        candidate_nodes = list(itertools.product(range(self.grid_size[0]),range(self.grid_size[1])))
+        # candidate_nodes = list(itertools.product(range(self.grid_size[0]),range(self.grid_size[1])))
         
-        if len(candidate_nodes) == 1:
-            self.winning = candidate_nodes[0]
-        elif len(candidate_nodes) > 1:
-            min_distance = lower_bound_threshold
-            for node in candidate_nodes:
-                x_copy = cp.deepcopy(cur_x)
-                weights = cp.deepcopy(self.grid[:,node[0],node[1]])
-                # Figure out how to get dtaidistance working
-                distance = dtw.distance_fast(x_copy,weights, window = self.window_size, use_pruning=True)
-                # distance = None
-                if distance <= min_distance:
-                    self.winning = node
-                    min_distance = distance
-        else:
-            print('ERROR: no candidate dynamic type warping nodes')
-            sys.exit()
+        # if len(candidate_nodes) == 1:
+        #     self.winning = candidate_nodes[0]
+        # elif len(candidate_nodes) > 1:
+        #     min_distance = lower_bound_threshold
+        #     for node in candidate_nodes:
+        #         x_copy = cp.deepcopy(cur_x)
+        #         weights = cp.deepcopy(self.grid[:,node[0],node[1]])
+        #         # Figure out how to get dtaidistance working
+        #         distance = dtw.distance_fast(x_copy,weights, window = self.window_size, use_pruning=True)
+        #         # distance = None
+        #         if distance <= min_distance:
+        #             self.winning = node
+        #             min_distance = distance
+        # else:
+        #     print('ERROR: no candidate dynamic type warping nodes')
+        #     sys.exit()
           
-        win_ub = np.where(upper_bounds == upper_bounds.min().min())
-        win_ub = list(zip(win_ub[0],win_ub[1]))
-        win_lb = np.where(lower_bounds == lower_bounds.min().min())
-        win_lb = list(zip(win_lb[0],win_lb[1]))
+        # win_ub = np.where(upper_bounds == upper_bounds.min().min())
+        # win_ub = list(zip(win_ub[0],win_ub[1]))
+        # win_lb = np.where(lower_bounds == lower_bounds.min().min())
+        # win_lb = list(zip(win_lb[0],win_lb[1]))
         
-        print('Winning Nodes:')
-        print(' upper_bound: {} (dist: {})'.format(win_ub,upper_bounds.min().min()))
-        print(' lower_bound: {} (dist: {})'.format(win_lb,lower_bounds.min().min()))
-        print('         DTW: {} (dist: {})'.format([self.winning],min_distance))
+        # print('Winning Nodes:')
+        # print(' upper_bound: {} (dist: {})'.format(win_ub,upper_bounds.min().min()))
+        # print(' lower_bound: {} (dist: {})'.format(win_lb,lower_bounds.min().min()))
+        # print('         DTW: {} (dist: {})'.format([self.winning],min_distance))
                 
-        breakhere=1
+        # breakhere=1
         
         
         
