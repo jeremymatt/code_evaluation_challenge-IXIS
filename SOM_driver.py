@@ -43,10 +43,9 @@ data_dir = os.path.join(cd,'data','bank+marketing','bank-additional','bank-addit
 
 #Build paths to store extracted data plots 
 #Make directory structure if it doesn't exist
-data_output_dir = os.path.join(cd,'outputs','SVM')
-plot_output_dir = os.path.join(data_output_dir,'plots')
-if not os.path.isdir(plot_output_dir):
-    os.makedirs(plot_output_dir)
+data_output_dir = os.path.join(cd,'outputs','SOM')
+if not os.path.isdir(data_output_dir):
+    os.makedirs(data_output_dir)
 
 #Load the dataset
 data_df = HF.load_dataframe(os.path.join(data_dir,'bank-additional-full.csv'))
@@ -61,6 +60,11 @@ target_feature = 'y'
 data_keys = [key for key in data_df.keys() if not key == target_feature]
 
 
+legend_text = binary_dict[target_feature]
+
+
+
+
 #Split into 60/20/20 train/validate/test sets
 train, test = np.split(data_df.sample(frac=1, random_state=42), 
                        [int(.8*len(data_df))])
@@ -71,65 +75,69 @@ y_train = train[target_feature].values.astype(int)
 x_test = test[data_keys].values.astype(float)
 y_test = test[target_feature].values.astype(int)
 
-sum(data_df[target_feature])/data_df.shape[0]
-sum(y_train)/len(y_train)
-sum(y_test)/len(y_test)
+X = data_df[data_keys]
+X = test
 
-classes = np.unique(data_df[target_feature].astype(int))
-class_weights = sklearn.utils.class_weight.compute_class_weight(
-    class_weight = 'balanced',
-    classes = classes,
-    y = data_df[target_feature].astype(int))
 
-class_weights = dict(zip(np.unique(classes), class_weights))
+##################
+#  Dataset Settings
+##################
+n_bins = 10
+weights_fn = 'weights.pkl'
+num_runs = 1  #Number of SOM runs to complete
+#If loading, we only want to re-plot once
+verbose = False
+plot_fn_prefix = None
 
-#%%
+##################
+#  SOM Training Settings
+##################
+# grid_size = [50,50]
+grid_size = [10,10]
+# grid_size = [4,4]
+#Set the starting learning rate and neighborhood size
+alpha = 0.9
+neighborhood_size = int(grid_size[0]/2)
+num_epochs = 50
+toroidal = True
+distance='euclidean'
 
-results_dict = {}
+##################
+#  Visualization Settings
+##################
+plot_legend = True
+legend_text = 'auto'
+n_clusters = 2
+#Method for displaying samples on the u-matrix and feature planes
+#either "symbols" or "labels"
+#symbols plots points with different symbols based on the "label_ID" column
+#labels prints a text string at each sample location (such as the patient ID)
+sample_vis='symbols'  
+#background for the feature planes.  Either the raw weights or a u-matrix 
+#style of visualization showing weight change between grid cells
+plane_vis='weights'  #either "weights" or "u_matrix"
+extended_marker_list = False
+plot_legend = True
 
-for n_estimators in np.arange(25,150,25):
-    results_dict[n_estimators] = {'precision':[],'recall':[]}
-    for max_depth in range(1,20):
-        print('\rEstimators: {}, depth: {}'.format(n_estimators,max_depth),end='',flush=True)
-        model = RF(
-            n_estimators = n_estimators,
-            max_depth = max_depth,
-            class_weight = class_weights)
-        model.fit(x_train, y_train)
-        out = model.predict(x_test)
+
+#boolean flag to include D in the u-matrix calculations
+include_D = False
+
+SOM_model = SOM.SOM(grid_size,X,target_feature,data_keys,alpha,neighborhood_size,toroidal,distance)
+
+SOM_model.train(num_epochs)
+
+SOM_model.save_weights(data_output_dir,weights_fn)
         
-        results_dict[n_estimators]['precision'].append(precision_score(y_test, out))
-        results_dict[n_estimators]['recall'].append(recall_score(y_test, out))
-   
-print('\n\n')
-fig,ax = plt.subplots(1,1,figsize=[20,15])
-for n_estimators in results_dict.keys():
-    ax.plot(results_dict[n_estimators]['precision'],results_dict[n_estimators]['recall'],label = 'n_estimators: {}'.format(n_estimators))
-    
-ax.set_xlabel('precision')
-ax.set_ylabel('recall')
-fig.legend()
-     
+# SOM_model.plot_weight_hist(data_output_dir)
+
+SOM_model.calc_u_matrix()
+
+SOM_model.visualization_settings(data_output_dir,sample_vis,legend_text,include_D,target_feature,plane_vis,plot_legend,plot_fn_prefix)
+
+SOM_model.build_color_marker_lists(extended_marker_list)
 
 
-n_estimators = 50
-max_depth = 10
-
-print('\rSelected Estimators: {}, depth: {}'.format(n_estimators,max_depth),end='',flush=True)
-model = RF(
-    n_estimators = n_estimators,
-    max_depth = max_depth,
-    class_weight = class_weights)
-model.fit(x_train, y_train)
-out = model.predict(x_test)
-        
-
-out = model.predict(x_test)
-
-reverse = not binary_dict[target_feature][0] == 'yes'
-confusion,true_label_set,pred_label_set = HF.confusion_matrix(y_test,out,labels_dict=binary_dict[target_feature],reverse=reverse)
-
-print(confusion)
-
-target_names = ['no','yes']
-print(classification_report(y_test,out,target_names=target_names))
+plot_fn_prefix = 'num_clusters_{}-'.format(n_clusters)
+SOM_model.visualization_settings(data_output_dir,sample_vis,legend_text,include_D,target_feature,plane_vis,plot_legend,plot_fn_prefix)
+SOM_model.plot_clusters(n_clusters)
