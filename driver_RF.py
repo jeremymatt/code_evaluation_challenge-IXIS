@@ -59,11 +59,14 @@ data_keys = [key for key in data_df.keys() if not key == target_feature]
 
 
 #Split into 60/20/20 train/validate/test sets
-train, test = np.split(data_df.sample(frac=1, random_state=42), 
-                       [int(.8*len(data_df))])
+train, validate, test = np.split(data_df.sample(frac=1, random_state=42), 
+                       [int(.6*len(data_df)), int(.8*len(data_df))])
 
 x_train = train[data_keys].values.astype(float)
 y_train = train[target_feature].values.astype(int)
+
+x_val = validate[data_keys].values.astype(float)
+y_val = validate[target_feature].values.astype(int)
 
 x_test = test[data_keys].values.astype(float)
 y_test = test[target_feature].values.astype(int)
@@ -82,23 +85,32 @@ class_weights = dict(zip(np.unique(classes), class_weights))
 
 #%%
 
+#Init a dictionary to hold results
 results_dict = {}
 
+#Rudimentary parameter optimization to evaluate precision/recall tradeoff
+#for number of estimators and max depth of each tree
 for n_estimators in np.arange(25,150,25):
+    #Init lists in the results dict to hold precision and recall for each 
+    #max depth value
     results_dict[n_estimators] = {'precision':[],'recall':[]}
     for max_depth in range(1,20):
+        #Update user on progress
         print('\rEstimators: {}, depth: {}'.format(n_estimators,max_depth),end='',flush=True)
+        #Init and train a model
         model = RF(
             n_estimators = n_estimators,
             max_depth = max_depth,
             class_weight = class_weights)
         model.fit(x_train, y_train)
-        out = model.predict(x_test)
-        
+        #Predict the validation set variables
+        out = model.predict(x_val)
+        #Store the precision and recall in the results dict
         results_dict[n_estimators]['precision'].append(precision_score(y_test, out))
         results_dict[n_estimators]['recall'].append(recall_score(y_test, out))
    
 print('\n\n')
+#Plot a precision/recall ROC curve
 fig,ax = plt.subplots(1,1,figsize=[20,15])
 for n_estimators in results_dict.keys():
     ax.plot(results_dict[n_estimators]['precision'],results_dict[n_estimators]['recall'],label = 'n_estimators: {}'.format(n_estimators))
@@ -108,11 +120,12 @@ ax.set_ylabel('recall')
 fig.legend()
      
 
-
+#Selected values targeting precision around 40% and recall around 60%
 n_estimators = 50
 max_depth = 10
 
 print('\rSelected Estimators: {}, depth: {}'.format(n_estimators,max_depth),end='',flush=True)
+#Init the model, train, and predict the test-set labels
 model = RF(
     n_estimators = n_estimators,
     max_depth = max_depth,
@@ -120,13 +133,17 @@ model = RF(
 model.fit(x_train, y_train)
 out = model.predict(x_test)
         
-
-out = model.predict(x_test)
-
+#Determine label order for the confusion matrix
 reverse = not binary_dict[target_feature][0] == 'yes'
+#generate confusion matrix
+#NOTE: This is confusion matrix generation code I made for another project
+#because the confusion matrix codes I've found haven't suited my needs
 confusion,true_label_set,pred_label_set = HF.confusion_matrix(y_test,out,labels_dict=binary_dict[target_feature],reverse=reverse)
 
 print(confusion)
 
-target_names = ['no','yes']
-print(classification_report(y_test,out,target_names=target_names))
+#Ensure classification report has the labels in the and target names in the correct order
+labels = list(binary_dict[target_feature].keys())
+target_names = [binary_dict[target_feature][key] for key in labels]
+#Print the classification report
+print(classification_report(y_test,out,labels=labels,target_names=target_names))

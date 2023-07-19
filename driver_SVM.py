@@ -57,20 +57,26 @@ target_feature = 'y'
 data_keys = [key for key in data_df.keys() if not key == target_feature]
 
 
-#Split into 60/20/20 train/validate/test sets
+#Split into 80/20 train/test sets
 train, test = np.split(data_df.sample(frac=1, random_state=42), 
                        [int(.8*len(data_df))])
 
+#Separate the target from the data for 
 x_train = train[data_keys].values.astype(float)
 y_train = train[target_feature].values.astype(int)
 
 x_test = test[data_keys].values.astype(float)
 y_test = test[target_feature].values.astype(int)
 
+"""
+Check that proportions of target variables in train and test are similar
+to the complete dataset
 sum(data_df[target_feature])/data_df.shape[0]
 sum(y_train)/len(y_train)
 sum(y_test)/len(y_test)
+"""
 
+#Unbalanced dataset, so calculate class weights
 classes = np.unique(data_df[target_feature].astype(int))
 class_weights = sklearn.utils.class_weight.compute_class_weight(
     class_weight = 'balanced',
@@ -81,15 +87,23 @@ class_weights = dict(zip(np.unique(classes), class_weights))
 
 #%%
 
+#create and train SVM model
 clf = svm.SVC(class_weight=class_weights)
 clf.fit(x_train, y_train)
 
+#Predict the test-sample classes
 out = clf.predict(x_test)
 
+#Ordering for confusion matrix so "yes" is the positive class
 reverse = not binary_dict[target_feature][0] == 'yes'
+#generate confusion matrix
+#NOTE: This is confusion matrix generation code I made for another project
+#because the confusion matrix codes I've found haven't suited my needs
 confusion,true_label_set,pred_label_set = HF.confusion_matrix(y_test,out,labels_dict=binary_dict[target_feature],reverse=reverse)
 
 print(confusion)
 
-target_names = ['no','yes']
-print(classification_report(y_test,out,target_names=target_names))
+#Ensure classification report has the labels in the and target names in the correct order
+labels = list(binary_dict[target_feature].keys())
+target_names = [binary_dict[target_feature][key] for key in labels]
+print(classification_report(y_test,out,labels=labels,target_names=target_names))

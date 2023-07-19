@@ -64,8 +64,11 @@ train, validate, test = np.split(data_df.sample(frac=1, random_state=42),
                        [int(.6*len(data_df)), int(.8*len(data_df))])
 
 
+#Determine the number of features
 num_features = len(data_keys)
+#Number of neurons in each hidden layer
 layer_neuron_list = [5]
+#Build a backpropagation model in Keras
 model = HF.build_backprop_model(num_features,layer_neuron_list)
 
 x_train = train[data_keys].values.astype(float)
@@ -113,11 +116,17 @@ print('Test accuracy: {}'.format(model.evaluate(x_test,y_test)[1]))
 out = model.predict(x_test)
 out = out.round(0).astype(int).flatten()
 
-reverse = True
+#Ordering for confusion matrix so "yes" is the positive class
+reverse = not binary_dict[target_feature][0] == 'yes'
+#generate confusion matrix
+#NOTE: This is confusion matrix generation code I made for another project
+#because the confusion matrix codes I've found haven't suited my needs
 confusion,true_label_set,pred_label_set = HF.confusion_matrix(y_test,out,labels_dict=binary_dict[target_feature],reverse=reverse)
 
 print(confusion)
 
 
-target_names = ['no','yes']
-print(classification_report(y_test,out,target_names=target_names))
+#Ensure classification report has the labels in the and target names in the correct order
+labels = list(binary_dict[target_feature].keys())
+target_names = [binary_dict[target_feature][key] for key in labels]
+print(classification_report(y_test,out,labels=labels,target_names=target_names))
