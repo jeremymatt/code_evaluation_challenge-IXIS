@@ -51,6 +51,83 @@ target_feature_set = sorted(list(set(data_df[target_feature])))
 print('Target feature values: {} <== Expected two'.format(target_feature_set))
 
 
+#%% Investigate the number of records with duplicated input features
+
+#List of input feature column headings
+input_features = [key for key in data_df.keys() if not key==target_feature]
+#Groupby the input features and count the number of duplicates
+groupby_target = data_df.groupby(input_features,as_index=False).count()
+#Keep only input patterns that occur more than once
+groupby_target = groupby_target[groupby_target.y>1]
+
+#Calculate the number of input records that are not unique
+num_duplicated = groupby_target.y.sum()
+print('\n# entries that have at least one duplicate: {}'.format(num_duplicated))
+
+#Make copy of dataframe to retain only unique rows (used to create a manual
+#confusion matrix)
+data_df_unique = data_df.copy()
+
+#Add a "prediction" column
+data_df['prediction'] = data_df.y
+
+#Init a list to hold indices of duplicated input values with inconsistent target variables
+mixed_target = []
+#counter to track progress
+ctr = 1
+
+#Init a dataframe to manually build a confusion matrix
+confusion_matrix = pd.DataFrame(columns=['yes','no'],index=['yes','no'],data = 0)
+
+for ind,row in groupby_target.iterrows():
+    #Update progress for user
+    print('\rDup. group {}\{}    '.format(str(ctr).zfill(4),len(groupby_target)),end='',flush = True)
+    ctr += 1
+    #Find the rows matching the current set of duplicated input features
+    #and extract to a temporary dataframe
+    mask = np.all(data_df[input_features] == row[input_features],axis=1)
+    temp = data_df[mask]
+    #Drop the duplicated rows from the unique dataframe
+    data_df_unique.drop(index=temp.index,axis=1,inplace=True)
+    #Determine the number of "yes" and "no" responses
+    num_yes = sum(temp.y=='yes')
+    num_no = sum(temp.y=='no')
+    
+    #In the case of mixed responses for the same input pattern, the best a 
+    #classifier can do is pick either "yes" or "no" for that input pattern.  
+    #For this exercise, if there are fewer "no" responses, pick "no".  Otherwise
+    #pick "yes"
+    if num_yes >= num_no:
+        #"predict" as "yes"
+        #Update the "prediction" column
+        data_df.loc[temp.index,'prediction'] = 'yes'
+        #Fill in the manual confusion matrix
+        confusion_matrix.loc['yes','yes'] += num_yes #Correctly "classified" as "yes"
+        confusion_matrix.loc['no','yes'] += num_no #"yes" incorrectly "classified" as "no"
+    else:
+        #"predict" as "no"
+        #Update the "prediction" column
+        data_df.loc[temp.index,'prediction'] = 'no'
+        #Fill in the manual confusion matrix
+        confusion_matrix.loc['no','no'] += num_no #Correctly "classified" as "no"
+        confusion_matrix.loc['yes','no'] += num_yes #"no" incorrectly "classified" as "yes"
+    
+#Add the unique entries to the manual confusion matrix and add a 'n' column
+#containing the sums of true values
+confusion_matrix.loc['yes','yes'] += sum(data_df_unique.y == 'yes')
+confusion_matrix.loc['no','no'] += sum(data_df_unique.y == 'no')
+confusion_matrix['n'] = confusion_matrix[['yes','no']].sum(axis=1)
+
+print('\n\n')
+#create a 1:1 feature dict and print the reuslts
+target_feature_dict = {'yes':'yes','no':'no'}
+HF.print_results(data_df.y,data_df.prediction,target_feature_dict)
+#Print the manual confusion matrix for comparision purposes
+print('manual confusion matrix:')
+print(confusion_matrix)
+
+#Drop the faked "prediction" column
+data_df.drop('prediction',axis=1,inplace=True)
 
 #%%
 
