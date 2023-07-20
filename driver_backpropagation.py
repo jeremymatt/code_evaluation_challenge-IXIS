@@ -7,15 +7,8 @@ Created on Fri Jul 14 19:41:22 2023
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 import os
-import calendar
 import helper_functions as HF
-from keras import layers
-from keras import Input
-from keras import Model
-import sklearn
-from sklearn.metrics import classification_report
 
 batch_size = 120
 shuffle = True
@@ -77,14 +70,6 @@ data_keys = [key for key in data_df.keys() if not key == target_feature]
 train, validate, test = np.split(data_df.sample(frac=1, random_state=42), 
                        [int(.6*len(data_df)), int(.8*len(data_df))])
 
-
-#Determine the number of features
-num_features = len(data_keys)
-#Number of neurons in each hidden layer
-layer_neuron_list = [5]
-#Build a backpropagation model in Keras
-model = HF.build_backprop_model(num_features,layer_neuron_list)
-
 x_train = train[data_keys].values.astype(float)
 y_train = train[target_feature].values.astype(int)
 
@@ -102,9 +87,16 @@ sum(y_train)/len(y_train)
 sum(y_val)/len(y_val)
 sum(y_test)/len(y_test)
 """
-
 #Unbalanced dataset, so calculate class weights
 class_weights = HF.gen_class_weight_dict(data_df,target_feature)
+
+#Determine the number of features
+num_features = len(data_keys)
+#Number of neurons in each hidden layer
+layer_neuron_list = [5,3]
+dropout = 0.05
+#Build a backpropagation model in Keras
+model = HF.build_backprop_model(num_features,layer_neuron_list,data_output_dir,dropout=dropout)
 
 #%%
 
@@ -118,31 +110,19 @@ history = model.fit(
     class_weight = class_weights)
 
 
+#Plot the validation and training accuracy curves
 fig,ax = plt.subplots(1,1,figsize=[20,15])
 ax.plot(range(epochs),history.history['accuracy'],label = 'train accuracy')
 ax.plot(range(epochs),history.history['val_accuracy'],label = 'val accuracy')
 ax.set_xlabel('Training Epoch')
 ax.set_ylabel('Accuracy')
 fig.legend()
-# history.history
+fig.savefig(os.path.join(plot_output_dir,'train_val_accuracies.png'),bbox_inches='tight')
+
 
 print('Test accuracy: {}'.format(model.evaluate(x_test,y_test)[1]))
 out = model.predict(x_test)
 out = out.round(0).astype(int).flatten()
 
-HF.print_results(y_test,out,target_feature_dict)
-
-# #Ordering for confusion matrix so "yes" is the positive class
-# reverse = False
-# #generate confusion matrix
-# #NOTE: This is confusion matrix generation code I made for another project
-# #because the confusion matrix codes I've found haven't suited my needs
-# confusion,true_label_set,pred_label_set = HF.confusion_matrix(y_test,out,labels_dict=target_feature_dict,reverse=reverse)
-
-# print(confusion)
-
-
-# #Ensure classification report has the labels in the and target names in the correct order
-# labels = list(target_feature_dict.keys())
-# target_names = [target_feature_dict[key] for key in labels]
-# print(classification_report(y_test,out,labels=labels,target_names=target_names))
+results_fn = 'Backprop_results.txt'
+HF.print_results(y_test,out,target_feature_dict,data_output_dir, results_fn)

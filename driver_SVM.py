@@ -8,16 +8,9 @@ Created on Fri Jul 14 23:03:49 2023
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 import os
-import calendar
 import helper_functions as HF
-from keras import layers
-from keras import Input
-from keras import Model
-import sklearn
 from sklearn import svm
-from sklearn.metrics import classification_report
 
 #current working directory
 cd = os.getcwd()
@@ -40,9 +33,8 @@ data_dir = os.path.join(cd,'data','bank+marketing','bank-additional','bank-addit
 #Build paths to store extracted data plots 
 #Make directory structure if it doesn't exist
 data_output_dir = os.path.join(cd,'outputs','SVM')
-plot_output_dir = os.path.join(data_output_dir,'plots')
-if not os.path.isdir(plot_output_dir):
-    os.makedirs(plot_output_dir)
+if not os.path.isdir(data_output_dir):
+    os.makedirs(data_output_dir)
 
 #target feature as identified in the metadata
 target_feature = 'y'
@@ -102,7 +94,8 @@ clf.fit(x_train, y_train)
 out = clf.predict(x_test)
 
 
-HF.print_results(y_test,out,target_feature_dict)
+results_fn = 'SVM_results.txt'
+HF.print_results(y_test,out,target_feature_dict,data_output_dir, results_fn)
 
 # #Ordering for confusion matrix so "yes" is the positive class
 # reverse = not binary_dict[target_feature][0] == 'yes'
