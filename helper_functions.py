@@ -12,6 +12,9 @@ from keras import Input
 from keras import Model
 import keras
 
+from sklearn.metrics import classification_report
+import sklearn
+
 
 
 #Drop the "duration" feature per discussion in the metadata:
@@ -41,6 +44,45 @@ onehot_features = [
 
 binary_features = [
     'contact']
+
+def gen_class_weight_dict(df,target_feature):
+    classes = np.unique(df[target_feature].astype(int))
+    class_weights = sklearn.utils.class_weight.compute_class_weight(
+        class_weight = 'balanced',
+        classes = classes,
+        y = df[target_feature].astype(int))
+
+    class_weights = dict(zip(np.unique(classes), class_weights))
+    return class_weights
+
+def print_results(y_test,out,target_feature_dict):
+    
+    
+    #Ordering for confusion matrix so "yes" is the positive class
+    reverse = True
+    #generate confusion matrix
+    #NOTE: This is confusion matrix generation code I made for another project
+    #because the confusion matrix codes I've found haven't suited my needs
+    confusion,true_label_set,pred_label_set = confusion_matrix(y_test,out,labels_dict=target_feature_dict,reverse=reverse)
+    
+    print(confusion)
+    
+    #Ensure classification report has the labels in the and target names in the correct order
+    labels = list(target_feature_dict.keys())
+    target_names = [target_feature_dict[key] for key in labels]
+    print(classification_report(y_test,out,labels=labels,target_names=target_names))
+
+def target_feature_to_binary(df,target_feature,target_feature_dict):
+    
+    reverse_dict = {target_feature_dict[key]:key for key in target_feature_dict.keys()}
+    target_feature_vals = set(df[target_feature])
+    
+    for val in target_feature_vals:
+        if not val in reverse_dict.keys():
+            raise ValueError('ERROR: "{}" not included in target_feature_dict'.format(val))
+        df.loc[df[target_feature] == val,target_feature] = reverse_dict[val]
+        
+    return df
 
 def load_dataframe(path):
     data_df = pd.read_csv(path,sep=';')

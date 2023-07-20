@@ -44,15 +44,28 @@ plot_output_dir = os.path.join(data_output_dir,'plots')
 if not os.path.isdir(plot_output_dir):
     os.makedirs(plot_output_dir)
 
-#Load the dataset
-data_df = HF.load_dataframe(os.path.join(data_dir,'bank-additional-full.csv'))
-data_df = HF.process_pday(data_df)
-data_type_dict,categorical_features = HF.identify_categorical_cols(data_df)
-data_df,binary_dict = HF.gen_onehot_cols(data_df,categorical_features)
-data_df = HF.min_max_norm(data_df)
-
 #target feature as identified in the metadata
 target_feature = 'y'
+#Force translation order
+target_feature_dict = {0: 'no', 1: 'yes'}
+
+#Load the dataset
+data_df = HF.load_dataframe(os.path.join(data_dir,'bank-additional-full.csv'))
+#Convert the target feature to binary with a fixed order
+data_df = HF.target_feature_to_binary(data_df,target_feature,target_feature_dict)
+#From the exploratory histogram of the pday variable, whether a person was 
+#was previously contacted seems predictive of the target variable, but
+#the length of time since the previous contact does not seem particularly predictive
+#Therefore convert to a binary "previously contacted, yes/no" variable instead
+data_df = HF.process_pday(data_df)
+#Find categorical columns (columns containing text values)
+data_type_dict,categorical_features = HF.identify_categorical_cols(data_df)
+#Convert the categorical columns to either one-hot encoding or binary depending
+#on the number of values
+data_df,binary_dict = HF.gen_onehot_cols(data_df,categorical_features)
+#min/max normalize the data
+data_df = HF.min_max_norm(data_df)
+
 #All keys that are not the target
 data_keys = [key for key in data_df.keys() if not key == target_feature]
 
@@ -77,13 +90,7 @@ sum(y_test)/len(y_test)
 """
 
 #Unbalanced dataset, so calculate class weights
-classes = np.unique(data_df[target_feature].astype(int))
-class_weights = sklearn.utils.class_weight.compute_class_weight(
-    class_weight = 'balanced',
-    classes = classes,
-    y = data_df[target_feature].astype(int))
-
-class_weights = dict(zip(np.unique(classes), class_weights))
+class_weights = HF.gen_class_weight_dict(data_df,target_feature)
 
 #%%
 
@@ -94,16 +101,19 @@ clf.fit(x_train, y_train)
 #Predict the test-sample classes
 out = clf.predict(x_test)
 
-#Ordering for confusion matrix so "yes" is the positive class
-reverse = not binary_dict[target_feature][0] == 'yes'
-#generate confusion matrix
-#NOTE: This is confusion matrix generation code I made for another project
-#because the confusion matrix codes I've found haven't suited my needs
-confusion,true_label_set,pred_label_set = HF.confusion_matrix(y_test,out,labels_dict=binary_dict[target_feature],reverse=reverse)
 
-print(confusion)
+HF.print_results(y_test,out,target_feature_dict)
 
-#Ensure classification report has the labels in the and target names in the correct order
-labels = list(binary_dict[target_feature].keys())
-target_names = [binary_dict[target_feature][key] for key in labels]
-print(classification_report(y_test,out,labels=labels,target_names=target_names))
+# #Ordering for confusion matrix so "yes" is the positive class
+# reverse = not binary_dict[target_feature][0] == 'yes'
+# #generate confusion matrix
+# #NOTE: This is confusion matrix generation code I made for another project
+# #because the confusion matrix codes I've found haven't suited my needs
+# confusion,true_label_set,pred_label_set = HF.confusion_matrix(y_test,out,labels_dict=binary_dict[target_feature],reverse=reverse)
+
+# print(confusion)
+
+# #Ensure classification report has the labels in the and target names in the correct order
+# labels = list(binary_dict[target_feature].keys())
+# target_names = [binary_dict[target_feature][key] for key in labels]
+# print(classification_report(y_test,out,labels=labels,target_names=target_names))

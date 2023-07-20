@@ -50,6 +50,10 @@ target_feature = 'y'
 target_feature_set = sorted(list(set(data_df[target_feature])))
 print('Target feature values: {} <== Expected two'.format(target_feature_set))
 
+
+
+#%%
+
 #Identify which columns exclusively contain numeric data and which do not
 data_type_dict,categorical_features = HF.identify_categorical_cols(data_df)
 
