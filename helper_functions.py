@@ -11,6 +11,7 @@ from keras import layers
 from keras import Input
 from keras import Model
 import keras
+import os
 
 from sklearn.metrics import classification_report
 import sklearn
@@ -27,35 +28,37 @@ import sklearn
 """
 features_to_drop = ['duration']
 
-"""
-List of categorical features where order may not matter.  Use one-hot encoding
-for these features.
-"""
-onehot_features = [
-    'job',
-    'marital',
-    'education',
-    'default',
-    'housing',
-    'loan',
-    'month',
-    'day_of_week',
-    'poutcome']
+# """
+# List of categorical features where order may not matter.  Use one-hot encoding
+# for these features.
+# """
+# onehot_features = [
+#     'job',
+#     'marital',
+#     'education',
+#     'default',
+#     'housing',
+#     'loan',
+#     'month',
+#     'day_of_week',
+#     'poutcome']
 
-binary_features = [
-    'contact']
+# binary_features = [
+#     'contact']
 
 def gen_class_weight_dict(df,target_feature):
+    #Find the unique classes
     classes = np.unique(df[target_feature].astype(int))
+    #Compute balanced class weights
     class_weights = sklearn.utils.class_weight.compute_class_weight(
         class_weight = 'balanced',
         classes = classes,
         y = df[target_feature].astype(int))
-
+    #Convert to a dict
     class_weights = dict(zip(np.unique(classes), class_weights))
     return class_weights
 
-def print_results(y_test,out,target_feature_dict):
+def print_results(y_test,out,target_feature_dict,output_dir, results_fn):
     
     
     #Ordering for confusion matrix so "yes" is the positive class
@@ -65,12 +68,21 @@ def print_results(y_test,out,target_feature_dict):
     #because the confusion matrix codes I've found haven't suited my needs
     confusion,true_label_set,pred_label_set = confusion_matrix(y_test,out,labels_dict=target_feature_dict,reverse=reverse)
     
-    print(confusion)
+    confusion.to_csv(os.path.join(output_dir,'confusion_matrix.csv'))
     
+    print(confusion)
+    print('\nClassification Report:')
     #Ensure classification report has the labels in the and target names in the correct order
     labels = list(target_feature_dict.keys())
     target_names = [target_feature_dict[key] for key in labels]
-    print(classification_report(y_test,out,labels=labels,target_names=target_names))
+    classification_results = classification_report(y_test,out,labels=labels,target_names=target_names)
+    print(classification_results)
+    
+    with open(os.path.join(output_dir,results_fn), 'w') as f:
+        f.write('Confusion matrix (rows = truth, columns = predictions):\n')
+        print(confusion,file=f)
+        f.write('\n\nClassification report:\n')
+        f.write(classification_results)
 
 def target_feature_to_binary(df,target_feature,target_feature_dict):
     
@@ -178,7 +190,26 @@ def min_max_norm(df):
     return df
             
             
-def build_backprop_model(num_features,layer_neuron_list):
+def build_backprop_model(num_features,layer_neuron_list,output_dir,dropout = 0):
+    """
+    Generates a dense backprop model
+
+    Parameters
+    ----------
+    num_features : TYPE int
+        DESCRIPTION.
+        Number of input features to be passed into the network
+    layer_neuron_list : TYPE list of integers
+        DESCRIPTION.
+        Determines the number of hidden layers from len(layer_neuron_list).
+        Each element describes the number of hidden layer neurons to use
+
+    Returns
+    -------
+    model : TYPE
+        DESCRIPTION.
+
+    """
       
     #Define the input layer
     input_layer = Input(shape = (num_features,))
@@ -196,8 +227,11 @@ def build_backprop_model(num_features,layer_neuron_list):
     #Define the output layer with sigmoid activation
     outputs = layers.Dense(1,activation='sigmoid')(layer_list[-1])
     
+    #Add dropout
+    do = layers.Dropout(dropout)(outputs)
+
     #Construct the model
-    model = Model(inputs = input_layer,outputs=outputs)
+    model = Model(inputs = input_layer,outputs=do)
         
     #Compile the model
     model.compile(
@@ -205,10 +239,13 @@ def build_backprop_model(num_features,layer_neuron_list):
         optimizer=keras.optimizers.RMSprop(learning_rate=0.0005), 
         metrics = ['accuracy'])
     
-    
+    #Print summary to screen and to file
     model.summary()
+    with open(os.path.join(output_dir,'model_summary.txt'),'w',newline='\n') as f:
+        model.summary(print_fn = lambda line: f.write('{}\n'.format(line)))
     
     return model        
+
 
 def confusion_matrix(labels_true,labels_pred,labels_dict=None,reverse=True):
     """
@@ -249,6 +286,8 @@ def confusion_matrix(labels_true,labels_pred,labels_dict=None,reverse=True):
     
     pred_label_set = list(pred_label_set)
     pred_label_set.sort(reverse = reverse)
+    
+    
     
     
     if not type(labels_dict) == dict:
