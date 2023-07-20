@@ -8,16 +8,12 @@ Created on Sat Jul 15 09:56:00 2023
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 import os
-import calendar
 import helper_functions as HF
-from keras import layers
-from keras import Input
-from keras import Model
-import sklearn
-from sklearn.metrics import classification_report,precision_score,recall_score
+from sklearn.metrics import precision_score,recall_score
 from sklearn.ensemble import RandomForestClassifier as RF
+import itertools
+from sklearn.feature_selection import SelectFromModel
 
 
 #current working directory
@@ -108,7 +104,7 @@ for n_estimators in np.arange(5,60,10):
     results_dict[n_estimators] = {'precision':[],'recall':[]}
     for max_depth in range(1,20):
         #Update user on progress
-        print('\rEstimators: {}, depth: {}'.format(n_estimators,max_depth),end='',flush=True)
+        print('\rEstimators: {}, depth: {}     '.format(n_estimators,max_depth),end='',flush=True)
         #Init and train a model
         model = RF(
             n_estimators = n_estimators,
@@ -120,24 +116,77 @@ for n_estimators in np.arange(5,60,10):
         #Store the precision and recall in the results dict
         results_dict[n_estimators]['precision'].append(precision_score(y_val, out))
         results_dict[n_estimators]['recall'].append(recall_score(y_val, out))
-   
+  
+#Init a marker style cycler
+markers = itertools.cycle(['*','o','.','s','^','D'])
+
 print('\n\n')
 #Plot a precision/recall ROC curve
 fig,ax = plt.subplots(1,1,figsize=[20,15])
 for n_estimators in results_dict.keys():
-    ax.plot(results_dict[n_estimators]['precision'],results_dict[n_estimators]['recall'],label = 'n_estimators: {}'.format(n_estimators))
+    ax.plot(results_dict[n_estimators]['precision'],
+            results_dict[n_estimators]['recall'],
+            label = 'n_estimators: {}'.format(n_estimators),
+            marker=next(markers),
+            markersize = 15)
 ax.set_xlabel('precision')
 ax.set_ylabel('recall')
 ax.grid()
 fig.legend()
      
-
+#%%
 #Selected values targeting precision around 40% and recall around 60%
-n_estimators = 25
+n_estimators = 35
 max_depth = 10
 
 print('\rSelected Estimators: {}, depth: {}    \n\n'.format(n_estimators,max_depth),end='',flush=True)
+
+
+
+ctr = 1
 #Init the model, train, and predict the test-set labels
+dropped_features = []
+precision = []
+recall = []
+ratio = 1000000
+while ratio > 10:
+    model = RF(
+        n_estimators = n_estimators,
+        max_depth = max_depth,
+        class_weight = class_weights)
+    model.fit(x_train, y_train)
+    out = model.predict(x_val)
+            
+    #Print the results
+    results_fn = 'RF_results-{}.txt'.format(ctr)
+    HF.print_results(y_val,out,target_feature_dict,data_output_dir, results_fn)
+    
+    #Calculate precision and recall
+    precision.append(precision_score(y_val, out))
+    recall.append(recall_score(y_val, out))
+    
+    #Find the min and max importance and calculate the ratio
+    min_importance = model.feature_importances_.min()
+    max_importance = model.feature_importances_.max()
+    ratio = max_importance/min_importance
+    print('Iteration: {}, max/min ratio: {}'.format(ctr,ratio))
+    
+    ctr+=1
+    #Find the least important feature and drop from the datakeys list
+    inds = np.where(model.feature_importances_ == model.feature_importances_.min())[0][0]
+    dropped_features.append(data_keys[inds])
+    data_keys.remove(data_keys[inds])
+    
+    #Re-extract the test,train,and val data
+    x_train = train[data_keys].values.astype(float)
+    x_val = validate[data_keys].values.astype(float)
+    x_test = test[data_keys].values.astype(float)
+    
+plt.figure()    
+plt.plot(range(len(precision)),precision,label = 'precision')
+plt.plot(range(len(recall)),recall,label = 'recall')
+plt.legend()
+
 model = RF(
     n_estimators = n_estimators,
     max_depth = max_depth,
@@ -145,20 +194,6 @@ model = RF(
 model.fit(x_train, y_train)
 out = model.predict(x_test)
         
-
-HF.print_results(y_test,out,target_feature_dict)
-
-# #Determine label order for the confusion matrix
-# reverse = not binary_dict[target_feature][0] == 'yes'
-# #generate confusion matrix
-# #NOTE: This is confusion matrix generation code I made for another project
-# #because the confusion matrix codes I've found haven't suited my needs
-# confusion,true_label_set,pred_label_set = HF.confusion_matrix(y_test,out,labels_dict=binary_dict[target_feature],reverse=reverse)
-
-# print(confusion)
-
-# #Ensure classification report has the labels in the and target names in the correct order
-# labels = list(binary_dict[target_feature].keys())
-# target_names = [binary_dict[target_feature][key] for key in labels]
-# #Print the classification report
-# print(classification_report(y_test,out,labels=labels,target_names=target_names))
+#Print the results
+results_fn = 'RF_results-final.txt'.format(ctr)
+HF.print_results(y_test,out,target_feature_dict,data_output_dir, results_fn)
