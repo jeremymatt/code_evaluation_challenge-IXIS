@@ -182,6 +182,17 @@ while ratio > 10:
     x_val = validate[data_keys].values.astype(float)
     x_test = test[data_keys].values.astype(float)
     
+    
+with open(os.path.join(data_output_dir,'feature_selection_results.txt'),'w') as f:
+    tpls = list(zip(model.feature_importances_,data_keys,strict=True))
+    tpls.sort(reverse=True)
+    f.write('Selected Features by importance:\n')
+    for ctr,tpl in enumerate(tpls):
+        f.write('  {}. {} ==> {:0.4f}\n'.format(str(ctr).zfill(2),tpl[1],tpl[2]))
+        
+    f.write('\nDropped features in order of removal:')
+    for ctr
+        
 plt.figure()    
 plt.plot(range(len(precision)),precision,label = 'precision')
 plt.plot(range(len(recall)),recall,label = 'recall')
