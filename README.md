@@ -8,6 +8,8 @@ My exploratory investigation of the dataset consisted of rudimentary data qualit
 
 To determine assess duplicate records in the database, I used the pandas groupby function on all input features and the count function to aggregate the target feature.  Entries greater than 1 in the target feature column indicated repeated input patterns.  To estimate a theoretical maximum classification performance, I first assumed that all non-duplicated entries and any duplicated entries with consistent responses (i.e., duplicated input patterns where all instances had a target feature value of either "yes" or "no") could be classified perfectly.  For the duplicated patterns with mixed "yes" and "no" responses, I assumed a classifier that would classify an input pattern as "yes" if the number of actual yesses was greater than or equal to the actual number noes.
 
+I identified common personas in the dataset using groupby similar to the method I used to assess duplicate records
+
 ## Feature Engineering
 
 ## Backpropagation
