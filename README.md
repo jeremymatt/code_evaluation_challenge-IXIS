@@ -11,6 +11,7 @@ To determine assess duplicate records in the database, I used the pandas groupby
 I identified common personas in the dataset using a method similar to my assessment of duplicate records.  I selected a set of input variables containing personally identifiable information (age, job, education, default, housing, and loan) and used groupby to count the number of times each unique pattern appeared in the dataset.  To evaluate each persona's propensity to purchase, I calculated the ratio of "yes" responses to "no" responses.
 
 ## 2.2 Feature Engineering
+The dataset contains a number of categorical features where order may be misleading (e.g., 
 
 ## 2.3 Backpropagation
 
@@ -19,5 +20,14 @@ I identified common personas in the dataset using a method similar to my assessm
 ## 2.5 Random Forest
 
 # 3 Results
+
+## 3.1 Dataset Exploration
+
+
+## 3.2 Backpropagation
+
+## 3.3 Support Vector Machine
+
+## 3.4 Random Forest
 
 # 4 Conclusions/Future Work
