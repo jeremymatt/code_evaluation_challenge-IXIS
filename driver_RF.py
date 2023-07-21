@@ -36,7 +36,7 @@ data_dir = os.path.join(cd,'data','bank+marketing','bank-additional','bank-addit
 
 #Build paths to store extracted data plots 
 #Make directory structure if it doesn't exist
-data_output_dir = os.path.join(cd,'outputs','SVM')
+data_output_dir = os.path.join(cd,'outputs','RF')
 plot_output_dir = os.path.join(data_output_dir,'plots')
 if not os.path.isdir(plot_output_dir):
     os.makedirs(plot_output_dir)
