@@ -191,7 +191,8 @@ with open(os.path.join(data_output_dir,'feature_selection_results.txt'),'w') as 
         f.write('  {}. {} ==> {:0.4f}\n'.format(str(ctr).zfill(2),tpl[1],tpl[2]))
         
     f.write('\nDropped features in order of removal:')
-    for ctr
+    for ctr,val in dropped_features:
+        f.write('  {}. {}'.format(str(ctr).zfill(2),val))
         
 plt.figure()    
 plt.plot(range(len(precision)),precision,label = 'precision')
