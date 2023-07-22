@@ -45,8 +45,7 @@ Figure 3: Stacked bar chart of contact successes and failures by month.  Note th
 The best-case performance, assuming a classifier that has memorized each input pattern in the dataset, is summarized by the confusion matrix in Table 1.  These values correspond to precision of 96%, recall of 99%, and an overall accuracy of 99%.
 
 Table 1: Confusion matrix of ideal results  
-![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/8ed94cb0-7e81-492c-9f86-1acf87b7efe3)  
-
+![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/cc253668-2cea-4da3-992f-05277c53aff2)  
 
 ## 3.2 Backpropagation
 Backpropagation showed signs of overfitting regardless of the training parameters chosen.  While the training and validation accuracy curves did not appear to diverge systematically, the validation accuracy showed random fluctuations from one training epoch to the next, suggesting that the algorithm may not be generalizing well (Figure 4).  
@@ -56,13 +55,13 @@ Figure 4: Training and validation accuracy vs. training epoch.  Note the noise i
 
 The backpropagation results shown in Table 2 correspond to a precision of 33%, recall of 64%, and overall accuracy of 81%.  
 
-Table 2: Confusion matrix of backpropagation results
+Table 2: Confusion matrix of backpropagation results  
 ![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/adc95955-5e49-4fe8-a7e7-4bdf50f7bff2)   
 
 ## 3.3 Support Vector Machine
 The SVM results shown in Table 3 correspond to a precision of 32%, recall of 65%, and overall accuracy of 80%.  
 
-Table 3: Confusion matrix of SVM results
+Table 3: Confusion matrix of SVM results  
 ![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/d5720850-0eae-409e-8635-b97e5f0bff44)  
 
 ## 3.4 Random Forest
@@ -83,7 +82,7 @@ The random results shown in Table 4 are generated from a model trained on the fe
 
 These results correspond to a precision of 40%, recall of 60%, and overall accuracy of 85%.  
 
-Table 4: Confusion matrix of random forest results
+Table 4: Confusion matrix of random forest results  
 ![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/5d0606a8-e687-43c0-a58d-1558ff447803)  
 
 # 4 Conclusions/Future Work
