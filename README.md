@@ -51,13 +51,13 @@ Table 1: Confusion matrix of ideal results
 ## 3.2 Backpropagation
 Backpropagation showed signs of overfitting regardless of the training parameters chosen.  While the training and validation accuracy curves did not appear to diverge systematically, the validation accuracy showed random fluctuations from one training epoch to the next, suggesting that the algorithm may not be generalizing well (Figure 4).  
 
-![train_val_accuracies](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/5a947f13-606f-4892-b79d-1d911017112a)  
+![train_val_accuracies](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/94cbd460-cadd-4628-b372-dd7798aa84c7)  
 Figure 4: Training and validation accuracy vs. training epoch.  Note the noise in the validation accuracy (this noise was substantially worse for other random initializations).  
 
 The backpropagation results shown in Table 2 correspond to a precision of 33%, recall of 64%, and overall accuracy of 81%.  
 
 Table 2: Confusion matrix of backpropagation results
-![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/d48d5aa5-2dd7-4906-87fe-b4793a48646a)  
+![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/adc95955-5e49-4fe8-a7e7-4bdf50f7bff2)   
 
 ## 3.3 Support Vector Machine
 The SVM results shown in Table 3 correspond to a precision of 32%, recall of 65%, and overall accuracy of 80%.  
