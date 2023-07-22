@@ -13,7 +13,7 @@ I identified common personas in the dataset using a method similar to my assessm
 ## 2.2 Feature Engineering and Preprocessing
 The dataset contains a number of categorical features where converting to numeric order may be misleading or may cause discontinuities (e.g., day of the week, month, job).  I converted these features to one-hot encoding with a column header format of <original_feature_name>.<label>.  When reviewing the histograms for the pday variable, I noticed that people who had been previously contacted appeared to have a higher propensity to purchase, but that the length of time since the previous contact did not seem particularly predictive (Figure 1).  I converted this feature to a binary variable indicating whether or not the person was previously contacted.
 
-<INSERT FIG1>
+![histogram_pdays](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/1dbf2469-26f7-4c58-aa7c-7aec368a6661)  
 Figure 1: Histogram of time-since-previous-contact (pdays).  A value of -1 indicates that the person was not previously contacted.
 
 For all three models discussed below, I elected to use min/max normalization on all input features.  Due to time constraints I did not investigate other normalization methods (e.g., clipping, z-score, log).  
@@ -29,8 +29,7 @@ I implemented a support vector machine (SVM) using scikit-learn.  The out-of-box
 ## 2.5 Random Forest
 I implemented random forest using the built-in scikit-learn package.  Based on an informal parameter sweep, the number of predictors and the max depth of each predictor seemed to cause a precision/recall tradeoff.  I performed a parameter sweep with the number of estimators set to 5, 15, 25, 35, 45, and 55 and with max depths of 1-19 (Figure 2). Based on  this curve, 35 estimators with a max depth of 10 appeared to be a reasonable tradeoff between precision (~40%) and recall (~60%).  The scikit-learn random forest package includes an estimate of feature importance.  Using these settings, I conducted feature selection by repeatedly training a new random forest model and then dropping the least-important feature.  I repeated this until the ratio of most important feature to least important feature was less than 10.  As this progressed, I plotted precision and recall vs the number of features removed. 
 
-
-<INSERT FIG2>
+![precision_recall_ROC-curve](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/f7cafacc-99b2-403b-8223-ef130b074594)  
 Figure 2: Random Forest parameter sweep
 
 # 3 Results
@@ -40,35 +39,36 @@ I did not identify any obvious data quality problems with the dataset.  The most
 
 During the exploration, I noted that the pattern of contacts-per-month is not constant from month to month (Figure 3).  Since this is a multi-year dataset (2008-2013) the reason for this pattern is unclear.
 
-<INSERT FIG3>
+![histogram_counts_by_month](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/8fe73188-8e29-424e-b6d1-15bfc4c592a1)  
 Figure 3: Stacked bar chart of contact successes and failures by month.  Note the uneven distribution of total contacts as well as the varying proportions of success vs. failure.
 
 The best-case performance, assuming a classifier that has memorized each input pattern in the dataset, is summarized by the confusion matrix in Table 1.  These values correspond to precision of 96%, recall of 99%, and an overall accuracy of 99%.
 
 Table 1: Confusion matrix of ideal results  
-<INSERT TAB1>
+![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/8ed94cb0-7e81-492c-9f86-1acf87b7efe3)  
+
 
 ## 3.2 Backpropagation
 Backpropagation showed signs of overfitting regardless of the training parameters chosen.  While the training and validation accuracy curves did not appear to diverge systematically, the validation accuracy showed random fluctuations from one training epoch to the next, suggesting that the algorithm may not be generalizing well (Figure 4).  
 
-<INSERT FIG4>
+![train_val_accuracies](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/5a947f13-606f-4892-b79d-1d911017112a)  
 Figure 4: Training and validation accuracy vs. training epoch.  Note the noise in the validation accuracy (this noise was substantially worse for other random initializations).  
 
 The backpropagation results shown in Table 2 correspond to a precision of 33%, recall of 64%, and overall accuracy of 81%.  
 
 Table 2: Confusion matrix of backpropagation results
-<INSERT TAB2>
+![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/d48d5aa5-2dd7-4906-87fe-b4793a48646a)  
 
 ## 3.3 Support Vector Machine
 The SVM results shown in Table 3 correspond to a precision of 32%, recall of 65%, and overall accuracy of 80%.  
 
 Table 3: Confusion matrix of SVM results
-<INSERT TAB3>
+![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/d5720850-0eae-409e-8635-b97e5f0bff44)  
 
 ## 3.4 Random Forest
 Removing 43 features did not have a noticeable impact on random forest precision and recall (Figure 5)
 
-<INSERT FIG5>
+![precision_recall_dropped-features](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/11a02bce-7735-4bc8-aa61-dcd63b6fa0bb)  
 Figure 5: Precision and recall vs. number of features removed
 
 The random results shown in Table 4 are generated from a model trained on the features remaining after the iterative feature removal:  
@@ -84,8 +84,7 @@ The random results shown in Table 4 are generated from a model trained on the fe
 These results correspond to a precision of 40%, recall of 60%, and overall accuracy of 85%.  
 
 Table 4: Confusion matrix of random forest results
-<INSERT TAB4>
-
+![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/5d0606a8-e687-43c0-a58d-1558ff447803)  
 
 # 4 Conclusions/Future Work
 Random forest is the best of the three algorithms I tried.  It has similar performance to backpropagation and SVM, it runs faster than SVM, and is more explainable than backpropagation. 
