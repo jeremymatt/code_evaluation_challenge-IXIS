@@ -94,7 +94,7 @@ class_weights = HF.gen_class_weight_dict(data_df,target_feature)
 num_features = len(data_keys)
 #Number of neurons in each hidden layer
 layer_neuron_list = [5]
-dropout = 0.0
+dropout = 0.05
 #Build a backpropagation model in Keras
 model = HF.build_backprop_model(num_features,layer_neuron_list,data_output_dir,dropout=dropout)
 
@@ -119,6 +119,7 @@ ax.set_ylabel('Accuracy')
 fig.legend()
 fig.savefig(os.path.join(plot_output_dir,'train_val_accuracies.png'),bbox_inches='tight')
 
+model.save(os.path.join(data_output_dir,'trained_backprop_model'))
 
 print('Test accuracy: {}'.format(model.evaluate(x_test,y_test)[1]))
 out = model.predict(x_test)

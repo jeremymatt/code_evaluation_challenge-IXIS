@@ -14,6 +14,7 @@ from sklearn.metrics import precision_score,recall_score
 from sklearn.ensemble import RandomForestClassifier as RF
 import itertools
 from sklearn.feature_selection import SelectFromModel
+import joblib
 
 
 #current working directory
@@ -133,6 +134,7 @@ ax.set_xlabel('precision')
 ax.set_ylabel('recall')
 ax.grid()
 fig.legend()
+fig.savefig(os.path.join(plot_output_dir,'precision_recall_ROC-curve.png'),bbox_inches='tight')
      
 #%%
 #Selected values targeting precision around 40% and recall around 60%
@@ -171,18 +173,22 @@ while ratio > 10:
     ratio = max_importance/min_importance
     print('Iteration: {}, max/min ratio: {}'.format(ctr,ratio))
     
-    ctr+=1
-    #Find the least important feature and drop from the datakeys list
-    inds = np.where(model.feature_importances_ == model.feature_importances_.min())[0][0]
-    dropped_features.append(data_keys[inds])
-    data_keys.remove(data_keys[inds])
+    #If ratio is greater than 10 (and while loop will continue), drop the 
+    #current worst feature and regenerate the train,val, and test arrays
+    if ratio > 10:
+        ctr+=1
+        #Find the least important feature and drop from the datakeys list
+        inds = np.where(model.feature_importances_ == model.feature_importances_.min())[0][0]
+        dropped_features.append(data_keys[inds])
+        data_keys.remove(data_keys[inds])
+        
+        #Re-extract the test,train,and val data
+        x_train = train[data_keys].values.astype(float)
+        x_val = validate[data_keys].values.astype(float)
+        x_test = test[data_keys].values.astype(float)
     
-    #Re-extract the test,train,and val data
-    x_train = train[data_keys].values.astype(float)
-    x_val = validate[data_keys].values.astype(float)
-    x_test = test[data_keys].values.astype(float)
-    
-    
+  
+#Write a summary of the feature selection results to file
 with open(os.path.join(data_output_dir,'feature_selection_results.txt'),'w') as f:
     tpls = list(zip(model.feature_importances_,data_keys,strict=True))
     tpls.sort(reverse=True)
@@ -194,10 +200,14 @@ with open(os.path.join(data_output_dir,'feature_selection_results.txt'),'w') as 
     for ctr,val in enumerate(dropped_features):
         f.write('  {}. {}\n'.format(str(ctr+1).zfill(2),val))
         
-plt.figure()    
-plt.plot(range(len(precision)),precision,label = 'precision')
-plt.plot(range(len(recall)),recall,label = 'recall')
-plt.legend()
+fig,ax = plt.subplots(1,1,figsize=[20,15])  
+ax.plot(range(len(precision)),precision,label = 'precision')
+ax.plot(range(len(recall)),recall,label = 'recall')
+fig.legend()
+ax.set_xlabel('# Features Dropped')
+ax.set_ylabel('percent')
+ax.grid()
+fig.savefig(os.path.join(plot_output_dir,'precision_recall_dropped-features.png'),bbox_inches='tight')
 
 model = RF(
     n_estimators = n_estimators,
@@ -205,6 +215,9 @@ model = RF(
     class_weight = class_weights)
 model.fit(x_train, y_train)
 out = model.predict(x_test)
+
+#save the trained model
+joblib.dump(model,os.path.join(data_output_dir,'trained_model.pkl'))
         
 #Print the results
 results_fn = 'RF_results-final.txt'.format(ctr)

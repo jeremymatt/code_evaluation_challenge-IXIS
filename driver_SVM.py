@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import os
 import helper_functions as HF
 from sklearn import svm
+import joblib
 
 #current working directory
 cd = os.getcwd()
@@ -93,6 +94,9 @@ clf.fit(x_train, y_train)
 #Predict the test-sample classes
 out = clf.predict(x_test)
 
+
+#save the trained model
+joblib.dump(clf,os.path.join(data_output_dir,'trained_model.pkl'))
 
 results_fn = 'SVM_results.txt'
 HF.print_results(y_test,out,target_feature_dict,data_output_dir, results_fn)
