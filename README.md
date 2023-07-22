@@ -24,14 +24,14 @@ The dataset is highly imbalanced, with a yes/no ratio of approximately 0.11.  To
 I implemented a dense backpropagation neural network in Keras with the ability to flexibly choose the number of hidden layers and the number of neurons in each hidden layer. I trained the network using a random 60/20/20 train/validation/test split. I performed an informal parameter sweep of number of layers, number of hidden neurons, learning rate, and dropout. The final parameters I selected were one hidden layer with five hidden neurons, learning rate equal to 0.0005, and dropout of 0.0. I tried both the Adam and RMSprop optimizers; RMSprop appeared to perform slightly better. Using ReLU vs. a sigmoid activation function for the hidden layer(s) did not appear to significantly affect performance.  I did not perform formal optimizer selection or formal parameter selection due to time constraints and because the informal parameter selection did not have a strong effect on overall performance in terms of accuracy, precision, and recall on the test set.
 
 ## 2.4 Support Vector Machine
-I implemented a support vector machine (SVM) using scikit-learn.  The out-of-box performance was worse than that of either backpropagation or random forest so I elected not to pursue SVM further.  
+I implemented a support vector machine (SVM) using scikit-learn.  The out-of-box performance was no better than that of either backpropagation or random forest so I elected not to pursue SVM further.  
 
 ## 2.5 Random Forest
 I implemented random forest using the built-in scikit-learn package.  Based on an informal parameter sweep, the number of predictors and the max depth of each predictor seemed to cause a precision/recall tradeoff.  I performed a parameter sweep with the number of estimators set to 5, 15, 25, 35, 45, and 55 and with max depths of 1-19 (Figure 2). Based on  this curve, 35 estimators with a max depth of 10 appeared to be a reasonable tradeoff between precision (~40%) and recall (~60%).  The scikit-learn random forest package includes an estimate of feature importance.  Using these settings, I conducted feature selection by repeatedly training a new random forest model and then dropping the least-important feature.  I repeated this until the ratio of most important feature to least important feature was less than 10.  As this progressed, I plotted precision and recall vs the number of features removed. 
 
 
 <INSERT FIG2>
-Figure 2: Random Forest overview
+Figure 2: Random Forest parameter sweep
 
 # 3 Results
 
@@ -43,24 +43,59 @@ During the exploration, I noted that the pattern of contacts-per-month is not co
 <INSERT FIG3>
 Figure 3: Stacked bar chart of contact successes and failures by month.  Note the uneven distribution of total contacts as well as the varying proportions of success vs. failure.
 
+The best-case performance, assuming a classifier that has memorized each input pattern in the dataset, is summarized by the confusion matrix in Table 1.  These values correspond to precision of 96%, recall of 99%, and an overall accuracy of 99%.
+
+Table 1: Confusion matrix of ideal results  
+<INSERT TAB1>
+
 ## 3.2 Backpropagation
-Backpropagation showed signs of overfitting regardless of the training parameters chosen.  While the training and validation accuracy curves did not appear to diverge systematically, the validation accuracy showed random fluctuations from one training epoch to the next, suggesting that the algorithm may not be generalizing well (Figure 4).
+Backpropagation showed signs of overfitting regardless of the training parameters chosen.  While the training and validation accuracy curves did not appear to diverge systematically, the validation accuracy showed random fluctuations from one training epoch to the next, suggesting that the algorithm may not be generalizing well (Figure 4).  
 
 <INSERT FIG4>
-Figure 4: Training and validation accuracy vs. training epoch.  Note the noise in the validation accuracy.  
+Figure 4: Training and validation accuracy vs. training epoch.  Note the noise in the validation accuracy (this noise was substantially worse for other random initializations).  
 
+The backpropagation results shown in Table 2 correspond to a precision of 33%, recall of 64%, and overall accuracy of 81%.  
+
+Table 2: Confusion matrix of backpropagation results
+<INSERT TAB2>
 
 ## 3.3 Support Vector Machine
+The SVM results shown in Table 3 correspond to a precision of 32%, recall of 65%, and overall accuracy of 80%.  
+
+Table 3: Confusion matrix of SVM results
+<INSERT TAB3>
 
 ## 3.4 Random Forest
+Removing 43 features did not have a noticeable impact on random forest precision and recall (Figure 5)
+
+<INSERT FIG5>
+Figure 5: Precision and recall vs. number of features removed
+
+The random results shown in Table 4 are generated from a model trained on the features remaining after the iterative feature removal:  
+1. euribor3m  
+2. nr.employed  
+3. emp.var.rate  
+4. age  
+5. cons.conf.idx  
+6. campaign  
+7. pdays  
+8. cons.price.idx  
+
+These results correspond to a precision of 40%, recall of 60%, and overall accuracy of 85%.  
+
+Table 4: Confusion matrix of random forest results
+<INSERT TAB4>
+
 
 # 4 Conclusions/Future Work
-
+Random forest is the best of the three algorithms I tried.  It has similar performance to backpropagation and SVM, it runs faster than SVM, and is more explainable than backpropagation. 
 
 ## Future tasks:
-1. Additional feature selection and/or feature engineering  
-1. Investigate other prediction models  
-1. Investigate the uneven pattern of contacts-per-month  
+1. Additional feature selection (perhaps using principle component analysis) and/or feature engineering (perhaps singular value decomposition).  
+1. Investigate if the low average propensity to purchase exhibited by people with less education is a function of income and ability to purchase or if it is a function of an agent's ability to talk to certain groups of people (e.g., are some agents better at talking to certain groups of people).  
+1. Investigate if certain features (such as education or job) would provide more predictive value if treated as ordered features.  
+1. Investigate other prediction models   
+1. Investigate the uneven pattern of contacts-per-month and wether the poor performance during some months (relative to the total number of contacts) is an artifact of smaller sample sizes.
 
 ## Questions:
 1. What is the nr.employed feature?  The metadata says it is the "number of employees - quarterly indicator (numeric)".  While this information may be irrelevant to this task, it's unclear to me what this is measuring.  Is it an employment indicator? Perhaps the number of people employed per 10,000 people?  
