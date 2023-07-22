@@ -56,13 +56,13 @@ Figure 4: Training and validation accuracy vs. training epoch.  Note the noise i
 The backpropagation results shown in Table 2 correspond to a precision of 33%, recall of 64%, and overall accuracy of 81%.  
 
 Table 2: Confusion matrix of backpropagation results  
-![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/adc95955-5e49-4fe8-a7e7-4bdf50f7bff2)   
+![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/ffcffadb-17f7-42a9-b9c5-56e21525662a)    
 
 ## 3.3 Support Vector Machine
 The SVM results shown in Table 3 correspond to a precision of 32%, recall of 65%, and overall accuracy of 80%.  
 
 Table 3: Confusion matrix of SVM results  
-![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/d5720850-0eae-409e-8635-b97e5f0bff44)  
+![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/662e8003-3023-4959-9b9e-d8e95429abb6)  
 
 ## 3.4 Random Forest
 Removing 43 features did not have a noticeable impact on random forest precision and recall (Figure 5)
@@ -83,7 +83,7 @@ The random results shown in Table 4 are generated from a model trained on the fe
 These results correspond to a precision of 40%, recall of 60%, and overall accuracy of 85%.  
 
 Table 4: Confusion matrix of random forest results  
-![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/5d0606a8-e687-43c0-a58d-1558ff447803)  
+![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/c5efbec1-8f6e-43cd-b7d3-9ee4c33b422f)   
 
 # 4 Conclusions/Future Work
 Random forest is the best of the three algorithms I tried.  It has similar performance to backpropagation and SVM, it runs faster than SVM, and is more explainable than backpropagation. 
