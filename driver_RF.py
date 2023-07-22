@@ -188,11 +188,11 @@ with open(os.path.join(data_output_dir,'feature_selection_results.txt'),'w') as 
     tpls.sort(reverse=True)
     f.write('Selected Features by importance:\n')
     for ctr,tpl in enumerate(tpls):
-        f.write('  {}. {} ==> {:0.4f}\n'.format(str(ctr).zfill(2),tpl[1],tpl[2]))
+        f.write('  {}. {} ==> {:0.4f}\n'.format(str(ctr+1).zfill(2),tpl[1],tpl[0]))
         
-    f.write('\nDropped features in order of removal:')
-    for ctr,val in dropped_features:
-        f.write('  {}. {}'.format(str(ctr).zfill(2),val))
+    f.write('\nDropped features in order of removal:\n')
+    for ctr,val in enumerate(dropped_features):
+        f.write('  {}. {}\n'.format(str(ctr+1).zfill(2),val))
         
 plt.figure()    
 plt.plot(range(len(precision)),precision,label = 'precision')

@@ -221,6 +221,7 @@ def build_backprop_model(num_features,layer_neuron_list,output_dir,dropout = 0):
     #For each subsequent layer in the neuron list, add layer to the model
     for ctr,num_neurons in enumerate(layer_neuron_list[1:]):
         temp = layers.Dense(num_neurons,activation='relu')(layer_list[ctr])
+        # temp = layers.Dense(num_neurons,activation='sigmoid')(layer_list[ctr])
         layer_list.append(temp)
     
     
