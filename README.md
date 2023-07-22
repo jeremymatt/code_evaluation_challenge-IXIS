@@ -46,7 +46,7 @@ During the exploration, I noted that the pattern of contacts-per-month is not co
 ![histogram_counts_by_month](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/8fe73188-8e29-424e-b6d1-15bfc4c592a1)  
 Figure 4: Stacked bar chart of contact successes and failures by month.  Note the uneven distribution of total contacts as well as the varying proportions of success vs. failure.
 
-The best-case performance, assuming a classifier that has memorized each input pattern in the dataset, is summarized by the confusion matrix in Table 1.  These values correspond to precision of 96%, recall of 99%, and an overall accuracy of 99%.
+The best-case performance, assuming a classifier that has memorized each input pattern in the dataset, is summarized by the confusion matrix in Table 1.  These values correspond to precision (postive predictive value) of 96%, negative predictive value of 99.8%, and an overall accuracy of 99%.
 
 Table 1: Confusion matrix of ideal results  
 ![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/cc253668-2cea-4da3-992f-05277c53aff2)  
@@ -57,13 +57,13 @@ Backpropagation showed signs of overfitting regardless of the training parameter
 ![train_val_accuracies](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/94cbd460-cadd-4628-b372-dd7798aa84c7)  
 Figure 5: Training and validation accuracy vs. training epoch.  Note the noise in the validation accuracy (this noise was substantially worse for other settings and other random initializations).  
 
-The backpropagation results shown in Table 2 correspond to a precision of 33%, recall of 64%, and overall accuracy of 81%.  
+The backpropagation results shown in Table 2 correspond to a precision of 33%, negative predictive value of 95%, and overall accuracy of 81%.  
 
 Table 2: Confusion matrix of backpropagation results  
 ![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/ffcffadb-17f7-42a9-b9c5-56e21525662a)    
 
 ## 3.3 Support Vector Machine
-The SVM results shown in Table 3 correspond to a precision of 32%, recall of 65%, and overall accuracy of 80%.  
+The SVM results shown in Table 3 correspond to a precision of 32%, negative predictive value of 95%, and overall accuracy of 80%.  
 
 Table 3: Confusion matrix of SVM results  
 ![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/662e8003-3023-4959-9b9e-d8e95429abb6)  
@@ -84,7 +84,7 @@ The random results shown in Table 4 are generated from a model trained on the fe
 7. pdays  
 8. cons.price.idx  
 
-These results correspond to a precision of 40%, recall of 60%, and overall accuracy of 85%.  
+These results correspond to a precision of 40%, negative predictive value of 94%, and overall accuracy of 85%.  
 
 Table 4: Confusion matrix of random forest results  
 ![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/c5efbec1-8f6e-43cd-b7d3-9ee4c33b422f)   
