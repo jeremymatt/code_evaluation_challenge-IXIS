@@ -51,7 +51,7 @@ Table 1: Confusion matrix of ideal results
 Backpropagation showed signs of overfitting regardless of the training parameters chosen.  While the training and validation accuracy curves did not appear to diverge systematically, the validation accuracy showed random fluctuations from one training epoch to the next, suggesting that the algorithm may not be generalizing well (Figure 4).  
 
 ![train_val_accuracies](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/94cbd460-cadd-4628-b372-dd7798aa84c7)  
-Figure 4: Training and validation accuracy vs. training epoch.  Note the noise in the validation accuracy (this noise was substantially worse for other random initializations).  
+Figure 4: Training and validation accuracy vs. training epoch.  Note the noise in the validation accuracy (this noise was substantially worse for other settings and other random initializations).  
 
 The backpropagation results shown in Table 2 correspond to a precision of 33%, recall of 64%, and overall accuracy of 81%.  
 
