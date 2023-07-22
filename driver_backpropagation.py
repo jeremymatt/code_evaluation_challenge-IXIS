@@ -93,8 +93,8 @@ class_weights = HF.gen_class_weight_dict(data_df,target_feature)
 #Determine the number of features
 num_features = len(data_keys)
 #Number of neurons in each hidden layer
-layer_neuron_list = [5,3]
-dropout = 0.05
+layer_neuron_list = [5]
+dropout = 0.0
 #Build a backpropagation model in Keras
 model = HF.build_backprop_model(num_features,layer_neuron_list,data_output_dir,dropout=dropout)
 
