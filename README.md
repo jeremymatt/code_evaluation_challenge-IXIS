@@ -27,20 +27,24 @@ I implemented a dense backpropagation neural network in Keras with the ability t
 I implemented a support vector machine (SVM) using scikit-learn.  The out-of-box performance was no better than that of either backpropagation or random forest so I elected not to pursue SVM further.  
 
 ## 2.5 Random Forest
-I implemented random forest using the built-in scikit-learn package.  Based on an informal parameter sweep, the number of predictors and the max depth of each predictor seemed to cause a precision/recall tradeoff.  I performed a parameter sweep with the number of estimators set to 5, 15, 25, 35, 45, and 55 and with max depths of 1-19 (Figure 2). Based on  this curve, 35 estimators with a max depth of 10 appeared to be a reasonable tradeoff between precision (~40%) and recall (~60%).  The scikit-learn random forest package includes an estimate of feature importance.  Using these settings, I conducted feature selection by repeatedly training a new random forest model and then dropping the least-important feature.  I repeated this until the ratio of most important feature to least important feature was less than 10.  As this progressed, I plotted precision and recall vs the number of features removed. 
+I implemented random forest using the built-in scikit-learn package.  Based on an informal parameter sweep, the number of predictors and the max depth of each predictor seemed to cause a precision/recall tradeoff.  I performed a parameter sweep with the number of estimators set to 5, 15, 25, 35, 45, and 55 and with max depths of 1-19 (Figure 2). Based on  this curve, 35 estimators with a max depth of 10 appeared to be a reasonable tradeoff between precision (~40%) and recall (~60%).  The scikit-learn random forest package includes an estimate of feature importance.  Using these settings, I conducted feature selection by repeatedly training a new random forest model and then dropping the least-important feature.  I repeated this until the ratio of most important feature to least important feature was less than 10.  As this progressed, I plotted precision and recall vs the number of features removed (Figure 3). 
 
 ![precision_recall_ROC-curve](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/f7cafacc-99b2-403b-8223-ef130b074594)  
 Figure 2: Random Forest parameter sweep
+
+![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/e326f523-09fd-41ba-805f-0f2cec70faea)  
+Figure 3: Random Forest flow chart
+
 
 # 3 Results
 
 ## 3.1 Dataset Exploration
 I did not identify any obvious data quality problems with the dataset.  The most common persona (n=2,276/41,188) in the dataset was a 30 year old university-educated admin. with no default, no personal loan, and either with (n=1,232) or without (n=1,044) a housing loan. This group had a relatively high average propensity to purchase (14.2%).  Conversely 30 year old blue-collar workers (n=1,007/41,188) with no default, no personal loan, and either with (n=522) or without (n=485) a housing loan had a low average propensity to purchase (7.1%).  Age appears to be a strong predictor, with people over 60 having a very high propensity to purchase (40.0%).  Education is also a predictor.  People with less than a highschool education have a low average propensity to purchase (8.7%) compared to those with a university education (13.7%).  These summaries are drawn from the ```/outputs/exploratory/aggregate_summary_data.csv``` file.
 
-During the exploration, I noted that the pattern of contacts-per-month is not constant from month to month (Figure 3).  Since this is a multi-year dataset (2008-2013) the reason for this pattern is unclear.
+During the exploration, I noted that the pattern of contacts-per-month is not constant from month to month (Figure 4).  Since this is a multi-year dataset (2008-2013) the reason for this pattern is unclear.
 
 ![histogram_counts_by_month](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/8fe73188-8e29-424e-b6d1-15bfc4c592a1)  
-Figure 3: Stacked bar chart of contact successes and failures by month.  Note the uneven distribution of total contacts as well as the varying proportions of success vs. failure.
+Figure 4: Stacked bar chart of contact successes and failures by month.  Note the uneven distribution of total contacts as well as the varying proportions of success vs. failure.
 
 The best-case performance, assuming a classifier that has memorized each input pattern in the dataset, is summarized by the confusion matrix in Table 1.  These values correspond to precision of 96%, recall of 99%, and an overall accuracy of 99%.
 
@@ -48,10 +52,10 @@ Table 1: Confusion matrix of ideal results
 ![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/cc253668-2cea-4da3-992f-05277c53aff2)  
 
 ## 3.2 Backpropagation
-Backpropagation showed signs of overfitting regardless of the training parameters chosen.  While the training and validation accuracy curves did not appear to diverge systematically, the validation accuracy showed random fluctuations from one training epoch to the next, suggesting that the algorithm may not be generalizing well (Figure 4).  
+Backpropagation showed signs of overfitting regardless of the training parameters chosen.  While the training and validation accuracy curves did not appear to diverge systematically, the validation accuracy showed random fluctuations from one training epoch to the next, suggesting that the algorithm may not be generalizing well (Figure 5).  
 
 ![train_val_accuracies](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/94cbd460-cadd-4628-b372-dd7798aa84c7)  
-Figure 4: Training and validation accuracy vs. training epoch.  Note the noise in the validation accuracy (this noise was substantially worse for other settings and other random initializations).  
+Figure 5: Training and validation accuracy vs. training epoch.  Note the noise in the validation accuracy (this noise was substantially worse for other settings and other random initializations).  
 
 The backpropagation results shown in Table 2 correspond to a precision of 33%, recall of 64%, and overall accuracy of 81%.  
 
@@ -65,10 +69,10 @@ Table 3: Confusion matrix of SVM results
 ![image](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/662e8003-3023-4959-9b9e-d8e95429abb6)  
 
 ## 3.4 Random Forest
-Removing 43 features did not have a noticeable impact on random forest precision and recall (Figure 5)
+Removing 43 features did not have a noticeable impact on random forest precision and recall (Figure 6)
 
 ![precision_recall_dropped-features](https://github.com/jeremymatt/code_evaluation_challenge-IXIS/assets/32210294/11a02bce-7735-4bc8-aa61-dcd63b6fa0bb)  
-Figure 5: Precision and recall vs. number of features removed
+Figure 6: Precision and recall vs. number of features removed
 
 The random results shown in Table 4 are generated from a model trained on the features remaining after the iterative feature removal:  
 1. euribor3m  
