@@ -121,7 +121,8 @@ confusion_matrix['n'] = confusion_matrix[['yes','no']].sum(axis=1)
 print('\n\n')
 #create a 1:1 feature dict and print the reuslts
 target_feature_dict = {'yes':'yes','no':'no'}
-HF.print_results(data_df.y,data_df.prediction,target_feature_dict)
+results_fn = 'ideal_results.txt'
+HF.print_results(data_df.y,data_df.prediction,target_feature_dict,data_output_dir,results_fn)
 #Print the manual confusion matrix for comparision purposes
 print('manual confusion matrix:')
 print(confusion_matrix)
@@ -159,11 +160,20 @@ with open(os.path.join(data_output_dir,'exploratory_counts.txt'),'w') as f:
             f.write('\n{}:\n'.format(key))
             cur_feature_set = set(data_df[key])
             for feature_val in cur_feature_set:
+                #Extract a temporary dataframe of records that match the current
+                #feature and value
                 temp_df = data_df.loc[data_df[key]==feature_val]
+                #Find the number of "yes", "no", and total responses
+                num_yes = sum(temp_df.y == 'yes')
+                num_no = sum(temp_df.y == 'no')
                 num_instances = temp_df.shape[0]
-                counts_dict[key].append((feature_val,num_instances))
+                #Add the counts to the dictionary as a tuple
+                counts_dict[key].append((feature_val,num_instances,num_yes,num_no))
+                #Find the percent of input patterns exhibiting the current 
+                #feature value
                 percent = 100*num_instances/data_df.shape[0]
                 display_string = '{}: {}/{} ({:0.2f}%). Targ. feat.:'.format(feature_val,num_instances,data_df.shape[0],percent)
+                #Find the breakdown by target variable
                 for target_feature_val in target_feature_set:
                     temp_num_instances = temp_df.loc[temp_df[target_feature] == target_feature_val].shape[0]
                     percent = 100*temp_num_instances/num_instances
@@ -185,21 +195,29 @@ day_num_dict = {month.lower(): index for index, month in enumerate(calendar.day_
 #Pull the per-month counts out of the dictionary
 month_counts = counts_dict['month']
 #Convert from list of tuples to dict
-month_count_dict = {month_num_dict[tpl[0]]:tpl[1] for tpl in month_counts}
+month_count_dict = {month_num_dict[tpl[0]]:(tpl[1],tpl[2],tpl[3]) for tpl in month_counts}
 
-#For each month 1-12, put the count in a list
+#For each month 1-12, put the counts in lists
 month = range(1,13)
 count = []
+yes_count = []
+no_count = []
 for i in month:
     if i in month_count_dict.keys():
-        count.append(month_count_dict[i])
+        count.append(month_count_dict[i][0])
+        yes_count.append(month_count_dict[i][1])
+        no_count.append(month_count_dict[i][2])
     else:
         count.append(0)
+        yes_count.append(0)
+        no_count.append(0)
 
 fig,ax = plt.subplots(1,1,figsize=[20,15])     
-ax.bar(month,count)
+ax.bar(month,yes_count,label = 'yes')   
+ax.bar(month,no_count,bottom=yes_count,label = 'no')
 ax.set_xlabel('Month')
 ax.set_ylabel("num records")
+ax.legend()
 fig.savefig(os.path.join(plot_output_dir,'histogram_counts_by_month.png'),bbox_inches='tight')
 plt.close(fig)
 
